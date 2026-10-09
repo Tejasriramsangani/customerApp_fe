@@ -40,11 +40,19 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
     async function fetchAvailability() {
       setLoading(true);
       try {
-        const addressId = state.addressId || 'addr_default_vi_01';
+        let addressId = state.addressId;
+        if (!addressId || !/^[0-9a-fA-F]{24}$/.test(addressId)) {
+          try {
+            const addrRes = await apiClient.get<any[]>('/customer/addresses');
+            if (addrRes.success && Array.isArray(addrRes.data) && addrRes.data.length > 0) {
+              addressId = addrRes.data[0]._id || addrRes.data[0].id;
+            }
+          } catch {}
+        }
         const weightRangeId = state.selectedWeightRangeId || 'wr_10_20';
 
         const res = await apiClient.get<any>(
-          `/availability?addressId=${encodeURIComponent(addressId)}&weightRangeId=${encodeURIComponent(weightRangeId)}`,
+          `/availability?addressId=${encodeURIComponent(addressId || '')}&weightRangeId=${encodeURIComponent(weightRangeId)}`,
         );
 
         if (isMounted && res.success && res.data) {

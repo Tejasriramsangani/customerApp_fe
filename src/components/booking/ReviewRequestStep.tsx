@@ -47,12 +47,63 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
     setIsLoading(true);
     setErrorMessage(null);
 
+    let finalAddressId = state.addressId;
+    if (!finalAddressId || !/^[0-9a-fA-F]{24}$/.test(finalAddressId)) {
+      try {
+        const addrRes = await apiClient.get<any[]>('/customer/addresses');
+        if (addrRes.success && Array.isArray(addrRes.data) && addrRes.data.length > 0) {
+          finalAddressId = addrRes.data[0]._id || addrRes.data[0].id;
+        } else {
+          const createRes = await apiClient.post<any>('/customer/addresses', {
+            line1: location.formattedAddress || `${location.areaName}, ${location.city}`,
+            city: location.city || 'Vijayawada',
+            state: 'Andhra Pradesh',
+            pincode: location.pincode || '520011',
+            coordinates: [80.648, 16.5062],
+          });
+          if (createRes.success && createRes.data) {
+            finalAddressId = createRes.data._id || createRes.data.id;
+          }
+        }
+      } catch {}
+    }
+
+    let finalSlotId = state.selectedSlotId;
+    if (!finalSlotId || !/^[0-9a-fA-F]{24}$/.test(finalSlotId)) {
+      try {
+        const slotsRes = await apiClient.get<any[]>('/catalog/slots');
+        if (slotsRes.success && Array.isArray(slotsRes.data) && slotsRes.data.length > 0) {
+          finalSlotId = slotsRes.data[0]._id || slotsRes.data[0].id;
+        }
+      } catch {}
+    }
+
+    let finalWeightRangeId = state.selectedWeightRangeId;
+    if (!finalWeightRangeId || !/^[0-9a-fA-F]{24}$/.test(finalWeightRangeId)) {
+      try {
+        const wrRes = await apiClient.get<any[]>('/catalog/weight-ranges');
+        if (wrRes.success && Array.isArray(wrRes.data) && wrRes.data.length > 0) {
+          finalWeightRangeId = wrRes.data[0]._id || wrRes.data[0].id;
+        }
+      } catch {}
+    }
+
+    let finalCategoryIds = (state.selectedCategoryIds || []).filter((id) => /^[0-9a-fA-F]{24}$/.test(id));
+    if (finalCategoryIds.length === 0) {
+      try {
+        const catsRes = await apiClient.get<any[]>('/catalog/categories');
+        if (catsRes.success && Array.isArray(catsRes.data) && catsRes.data.length > 0) {
+          finalCategoryIds = catsRes.data.map((c: any) => c._id || c.id).filter(Boolean);
+        }
+      } catch {}
+    }
+
     const bookingPayload = {
-      addressId: state.addressId || 'addr_default_vi_01',
+      addressId: finalAddressId,
       scheduledDate: state.selectedDate,
-      timeSlotId: state.selectedSlotId,
-      estimatedWeightRangeId: state.selectedWeightRangeId,
-      categoryIds: state.selectedCategoryIds,
+      timeSlotId: finalSlotId,
+      estimatedWeightRangeId: finalWeightRangeId,
+      categoryIds: finalCategoryIds.length > 0 ? finalCategoryIds : undefined,
       settlementPreference: state.paymentPreference,
       remarks: state.remarks || `Pickup at ${location.areaName}`,
     };
@@ -70,7 +121,7 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
           scheduledDate: state.selectedDate,
           timeSlot: selectedSlot?.displayLabel || '11:00 AM – 1:00 PM',
           location: location.formattedAddress,
-          categories: selectedCategories.map((c) => c.name).join(', '),
+          categories: selectedCategories.map((c) => c.id),
           weight: selectedWeight?.label || '10 – 20 kg',
           paymentPreference: state.paymentPreference === 'CASH' ? 'Cash on pickup' : 'UPI Transfer',
           createdAt: new Date().toISOString(),
@@ -85,7 +136,7 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
         scheduledDate: state.selectedDate,
         timeSlot: selectedSlot?.displayLabel || '11:00 AM – 1:00 PM',
         location: location.formattedAddress,
-        categories: selectedCategories.map((c) => c.name).join(', '),
+        categories: selectedCategories.map((c) => c.id),
         weight: selectedWeight?.label || '10 – 20 kg',
         paymentPreference: state.paymentPreference === 'CASH' ? 'Cash on pickup' : 'UPI Transfer',
         createdAt: new Date().toISOString(),

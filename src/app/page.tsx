@@ -19,8 +19,12 @@ import { GreenerTomorrowSection } from '../components/home/GreenerTomorrowSectio
 import { ScrapRatesScreen } from '../components/catalog/ScrapRatesScreen';
 import { PickupBookingProvider } from '../context/PickupBookingContext';
 import { BookingWizardModal } from '../components/booking/BookingWizardModal';
+import { PickupDetailsScreen } from '../components/tracking/PickupDetailsScreen';
+import { MyPickupsScreen } from '../components/pickups/MyPickupsScreen';
+import { ProfileScreen } from '../components/profile/ProfileScreen';
 import { BrandLogo } from '../components/common/BrandLogo';
-import { Scale, LogOut } from 'lucide-react';
+import { apiClient } from '../lib/api-client';
+import { Scale, LogOut, Package, ArrowRight, RefreshCw, Calendar, Clock, Sparkles } from 'lucide-react';
 
 type AppFlowStep = 'loading' | 'onboarding' | 'location' | 'login' | 'otp' | 'personalize' | 'app';
 
@@ -28,9 +32,32 @@ function CustomerApp() {
   const [currentStep, setCurrentStep] = useState<AppFlowStep>('loading');
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [pendingPhone, setPendingPhone] = useState<string>('');
+  const [selectedPickupForDetails, setSelectedPickupForDetails] = useState<any | null>(null);
+  const [myPickups, setMyPickups] = useState<any[]>([]);
+  const [isLoadingPickups, setIsLoadingPickups] = useState(false);
 
   const { location, isSheetOpen, closeSheet, setLocation } = useLocation();
   const { user, logout } = useAuth();
+
+  const loadCustomerPickups = React.useCallback(async () => {
+    setIsLoadingPickups(true);
+    try {
+      const res = await apiClient.get('/customer/pickups');
+      if (res.success && Array.isArray(res.data)) {
+        setMyPickups(res.data);
+      }
+    } catch {
+      // keep fallback
+    } finally {
+      setIsLoadingPickups(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'pickups') {
+      loadCustomerPickups();
+    }
+  }, [activeTab, loadCustomerPickups]);
 
   useEffect(() => {
     try {
@@ -141,6 +168,29 @@ function CustomerApp() {
     );
   }
 
+  // Phase 6: Live Pickup Details & Tracking (Image 4 Screens 1, 2, 3)
+  if (selectedPickupForDetails) {
+    return (
+      <PickupDetailsScreen
+        initialPickup={
+          typeof selectedPickupForDetails === 'object'
+            ? selectedPickupForDetails
+            : null
+        }
+        pickupId={
+          typeof selectedPickupForDetails === 'object'
+            ? selectedPickupForDetails._id || selectedPickupForDetails.id
+            : undefined
+        }
+        onBack={() => setSelectedPickupForDetails(null)}
+        onPickupCancelled={() => {
+          setSelectedPickupForDetails(null);
+          loadCustomerPickups();
+        }}
+      />
+    );
+  }
+
   // Main App Shell (Phases 0, 4, 5, 6, 7)
   return (
     <div className="w-full h-full min-h-screen bg-[#F8FAFC] flex flex-col justify-between relative overflow-hidden">
@@ -240,58 +290,31 @@ function CustomerApp() {
         {activeTab === 'request' && (
           <BookingWizardModal
             onClose={() => setActiveTab('home')}
-            onGoToPickups={() => setActiveTab('pickups')}
+            onGoToPickups={(pickup) => {
+              setSelectedPickupForDetails(pickup || true);
+              setActiveTab('pickups');
+            }}
             onGoToHome={() => setActiveTab('home')}
           />
         )}
 
         {/* TAB 4: MY PICKUPS HUB (Image 5) */}
         {activeTab === 'pickups' && (
-          <div className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900">My Pickups Hub</h2>
-            <p className="text-xs text-slate-500">Track scheduled, completed, and cancelled pickups.</p>
-            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200 text-xs text-blue-900">
-              My Pickups hub ready for Phase 7 integration.
-            </div>
-          </div>
+          <MyPickupsScreen
+            onOpenPickupDetails={(pickup) => setSelectedPickupForDetails(pickup)}
+            onRequestNewPickup={() => setActiveTab('request')}
+          />
         )}
 
         {/* TAB 5: PROFILE & SETTINGS (Screen 10) */}
         {activeTab === 'profile' && (
-          <div className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900">Customer Profile & Settings</h2>
-            <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xl">
-                  {user?.fullName ? user.fullName.charAt(0).toUpperCase() : '👤'}
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">{user?.fullName || 'Guest Customer'}</h3>
-                  <p className="text-xs text-slate-500">{user?.mobileNumber ? `+91 ${user.mobileNumber}` : 'Not logged in'}</p>
-                  <p className="text-[10px] text-emerald-700 font-bold mt-0.5">📍 {location.areaName}, {location.city}</p>
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <button
-                  onClick={() => setCurrentStep('personalize')}
-                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800"
-                >
-                  Edit Profile Name
-                </button>
-                <button
-                  onClick={() => {
-                    logout();
-                    setCurrentStep('login');
-                  }}
-                  className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
+          <ProfileScreen
+            onEditName={() => setCurrentStep('personalize')}
+            onLogout={() => {
+              logout();
+              setCurrentStep('login');
+            }}
+          />
         )}
       </main>
 

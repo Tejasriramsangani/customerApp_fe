@@ -16,7 +16,7 @@ import { usePickupBooking, AVAILABLE_CATEGORIES, AVAILABLE_WEIGHT_RANGES, AVAILA
 import { useLocation } from '../../context/LocationContext';
 
 interface BookingSuccessStepProps {
-  onGoToPickups: () => void;
+  onGoToPickups: (pickup?: any) => void;
   onGoToHome: () => void;
 }
 
@@ -58,8 +58,9 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
   })();
 
   const handlePickupsClick = () => {
+    const pickupData = state.confirmedPickup;
     resetBooking();
-    onGoToPickups();
+    onGoToPickups(pickupData);
   };
 
   const handleHomeClick = () => {

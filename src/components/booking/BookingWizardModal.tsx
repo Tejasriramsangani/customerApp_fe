@@ -11,7 +11,7 @@ import { BookingSuccessStep } from './BookingSuccessStep';
 
 interface BookingWizardModalProps {
   onClose: () => void;
-  onGoToPickups: () => void;
+  onGoToPickups: (pickup?: any) => void;
   onGoToHome: () => void;
 }
 
