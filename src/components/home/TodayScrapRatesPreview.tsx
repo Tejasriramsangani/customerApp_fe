@@ -1,26 +1,76 @@
 "use client";
 
-import React from 'react';
-import { TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { apiClient } from '../../lib/api-client';
 
 interface TodayScrapRatesPreviewProps {
   onViewAll: () => void;
 }
 
-export const TODAY_RATES_DATA = [
-  { id: '1', emoji: '📰', name: 'Newspaper', sub: 'Clean & dry', price: '₹18', unit: 'kg', trend: '+₹1.50', isUp: true, category: 'paper' },
-  { id: '2', emoji: '📦', name: 'Cardboard', sub: 'Corrugated boxes', price: '₹14', unit: 'kg', trend: '+₹0.50', isUp: true, category: 'paper' },
-  { id: '3', emoji: '🍾', name: 'PET Plastic', sub: 'Water & soda bottles', price: '₹28', unit: 'kg', trend: '-₹1.00', isUp: false, category: 'plastic' },
-  { id: '4', emoji: '⚙️', name: 'Iron (Heavy)', sub: 'Steel & pipes', price: '₹32', unit: 'kg', trend: '+₹2.00', isUp: true, category: 'metal' },
-  { id: '5', emoji: '🥫', name: 'Aluminium', sub: 'Cans & utensils', price: '₹125', unit: 'kg', trend: '+₹5.00', isUp: true, category: 'metal' },
-  { id: '6', emoji: '🔌', name: 'Copper Wires', sub: 'Clean wires & coils', price: '₹480', unit: 'kg', trend: '+₹15.00', isUp: true, category: 'metal' },
-  { id: '7', emoji: '💻', name: 'E-Waste', sub: 'CPUs, motherboards', price: '₹85', unit: 'kg', trend: '+₹0.00', isUp: true, category: 'ewaste' },
-];
+interface DynamicRateItem {
+  id: string;
+  name: string;
+  price: string;
+  unit: string;
+  emoji: string;
+  category: string;
+}
+
+const getEmojiForCategory = (catName: string) => {
+  const c = catName.toLowerCase();
+  if (c.includes('metal') || c.includes('iron') || c.includes('copper')) return '⚙️';
+  if (c.includes('paper') || c.includes('carton')) return '📦';
+  if (c.includes('plastic')) return '🍾';
+  if (c.includes('ewaste') || c.includes('electronic')) return '💻';
+  return '♻️';
+};
 
 export const TodayScrapRatesPreview: React.FC<TodayScrapRatesPreviewProps> = ({
   onViewAll,
 }) => {
+  const [rates, setRates] = useState<DynamicRateItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiClient
+      .get('/catalog')
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.success && res.data?.categories) {
+          const items: DynamicRateItem[] = [];
+          res.data.categories.forEach((cat: any) => {
+            if (Array.isArray(cat.products)) {
+              cat.products.forEach((p: any) => {
+                const price = p.currentRate?.ratePerKgPaise
+                  ? `₹${(p.currentRate.ratePerKgPaise / 100).toFixed(0)}`
+                  : '₹30';
+                items.push({
+                  id: p._id || p.id,
+                  name: p.name,
+                  price,
+                  unit: p.unit || 'kg',
+                  emoji: getEmojiForCategory(cat.name),
+                  category: cat.name,
+                });
+              });
+            }
+          });
+          setRates(items.slice(0, 8));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80">
       {/* Header */}
@@ -40,7 +90,7 @@ export const TodayScrapRatesPreview: React.FC<TodayScrapRatesPreviewProps> = ({
 
         <button
           onClick={onViewAll}
-          className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-0.5 bg-emerald-50 px-2.5 py-1 rounded-full transition-colors"
+          className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-0.5 bg-emerald-50 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
         >
           <span>View All</span>
           <ArrowRight className="w-3 h-3 stroke-[2.5]" />
@@ -49,32 +99,32 @@ export const TodayScrapRatesPreview: React.FC<TodayScrapRatesPreviewProps> = ({
 
       {/* Horizontal Scrolling Rate Cards */}
       <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
-        {TODAY_RATES_DATA.map((item) => (
-          <motion.div
-            key={item.id}
-            whileTap={{ scale: 0.96 }}
-            onClick={onViewAll}
-            className="min-w-[115px] p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/40 transition-all flex flex-col items-center text-center shrink-0 cursor-pointer shadow-xs"
-          >
-            <span className="text-2xl mb-1">{item.emoji}</span>
-            <p className="text-[11px] font-extrabold text-slate-800 truncate w-full">
-              {item.name}
-            </p>
-            <p className="text-xs font-black text-[#0A3D2B] mt-0.5">
-              {item.price}
-              <span className="text-[9px] font-normal text-slate-500">/{item.unit}</span>
-            </p>
-            <span
-              className={`text-[9px] font-bold mt-1 px-1.5 py-0.2 rounded-md ${
-                item.isUp
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'bg-rose-100 text-rose-700'
-              }`}
+        {loading ? (
+          <div className="py-4 px-2 text-xs text-slate-400">Loading live scrap rates...</div>
+        ) : rates.length === 0 ? (
+          <div className="py-4 px-2 text-xs text-slate-400">Rates currently synchronizing...</div>
+        ) : (
+          rates.map((item) => (
+            <motion.div
+              key={item.id}
+              whileTap={{ scale: 0.96 }}
+              onClick={onViewAll}
+              className="min-w-[115px] p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/40 transition-all flex flex-col items-center text-center shrink-0 cursor-pointer shadow-xs"
             >
-              {item.isUp ? '⬆' : '⬇'} {item.trend}
-            </span>
-          </motion.div>
-        ))}
+              <span className="text-2xl mb-1">{item.emoji}</span>
+              <p className="text-[11px] font-extrabold text-slate-800 truncate w-full">
+                {item.name}
+              </p>
+              <p className="text-xs font-black text-[#0A3D2B] mt-0.5">
+                {item.price}
+                <span className="text-[9px] font-normal text-slate-500">/{item.unit.toLowerCase()}</span>
+              </p>
+              <span className="text-[9px] font-bold mt-1 px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800">
+                Verified Mandi
+              </span>
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );

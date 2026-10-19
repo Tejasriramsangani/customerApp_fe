@@ -1,6 +1,7 @@
 /**
  * ASLI KAATA API Client
- * Configured with automatic JWT Bearer injection and 401 refresh token rotation.
+ * Configured with automatic JWT Bearer injection, 401 refresh token rotation,
+ * and real-time backend server health & downtime detection.
  */
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
@@ -12,7 +13,48 @@ export interface ApiResponse<T = any> {
   timestamp: string;
 }
 
+type ServerStatusListener = (isDown: boolean, details?: string) => void;
+
 class ApiClient {
+  private statusListeners: Set<ServerStatusListener> = new Set();
+  public isServerDown: boolean = false;
+  public lastErrorDetails: string = '';
+
+  public onServerStatusChange(listener: ServerStatusListener) {
+    this.statusListeners.add(listener);
+    return () => {
+      this.statusListeners.delete(listener);
+    };
+  }
+
+  private notifyStatus(isDown: boolean, details?: string) {
+    this.isServerDown = isDown;
+    if (details) this.lastErrorDetails = details;
+    this.statusListeners.forEach((fn) => fn(isDown, details));
+  }
+
+  public async checkHealth(): Promise<boolean> {
+    const rootUrl = BASE_URL.replace(/\/api\/v1\/?$/, '');
+    try {
+      const res = await fetch(`${rootUrl}/health`, { method: 'GET', cache: 'no-store' });
+      if (res.ok) {
+        this.notifyStatus(false);
+        return true;
+      }
+    } catch {
+      // Fallback check against rates catalog
+      try {
+        const fallback = await fetch(`${BASE_URL}/catalog/rates`, { method: 'GET', cache: 'no-store' });
+        if (fallback.ok) {
+          this.notifyStatus(false);
+          return true;
+        }
+      } catch {}
+    }
+    this.notifyStatus(true, 'Server unreachable or undergoing maintenance');
+    return false;
+  }
+
   private getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('aslikaata_customer_access_token');
@@ -85,6 +127,13 @@ class ApiClient {
     try {
       const response = await fetch(url, { ...options, headers });
 
+      // Handle 502, 503, 504 server down / maintenance errors
+      if (response.status >= 502 && response.status <= 504) {
+        this.notifyStatus(true, `HTTP ${response.status}: Gateway or Service Maintenance`);
+      } else if (this.isServerDown && response.status < 500) {
+        this.notifyStatus(false);
+      }
+
       // Handle 401 Unauthorized with token refresh rotation
       if (response.status === 401 && !isRetry) {
         const newToken = await this.refreshAccessToken();
@@ -97,10 +146,21 @@ class ApiClient {
       const data = await response.json();
       return data as ApiResponse<T>;
     } catch (err: any) {
+      const errorMsg = err.message || 'Network request failed';
+      // Flag server downtime on connection refusals or network failures
+      if (
+        errorMsg.includes('Failed to fetch') ||
+        errorMsg.includes('NetworkError') ||
+        errorMsg.includes('fetch failed') ||
+        errorMsg.includes('Network request failed')
+      ) {
+        this.notifyStatus(true, errorMsg);
+      }
+
       return {
         success: false,
         data: null as any,
-        error: err.message || 'Network request failed',
+        error: errorMsg,
         timestamp: new Date().toISOString(),
       };
     }

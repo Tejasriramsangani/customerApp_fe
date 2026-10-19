@@ -5,7 +5,7 @@ import { PickupCard, PickupItemData } from './PickupCard';
 import { EmptyCancelledState } from './EmptyCancelledState';
 import { InvoiceModal } from './InvoiceModal';
 import { apiClient } from '../../lib/api-client';
-import { RefreshCw, Plus, Sparkles } from 'lucide-react';
+import { RefreshCw, Plus, Package } from 'lucide-react';
 
 export type PickupTab = 'scheduled' | 'completed' | 'cancelled';
 
@@ -13,89 +13,6 @@ interface MyPickupsScreenProps {
   onOpenPickupDetails: (pickup: PickupItemData) => void;
   onRequestNewPickup: () => void;
 }
-
-// Seed mock pickups matching Image 5
-const SEED_SCHEDULED_PICKUPS: PickupItemData[] = [
-  {
-    id: 'akp-10245',
-    pickupCode: 'AKP-10245',
-    status: 'ASSIGNED',
-    scheduledDate: '2026-10-04',
-    timeSlotSnapshot: { displayLabel: '9:00 AM – 11:00 AM' },
-    locationLabel: 'Madhura Nagar, Vijayawada',
-    assignment: { employeeName: 'Ramesh Kumar', employeeCode: 'AKP-EMP-0247' },
-  },
-  {
-    id: 'akp-10238',
-    pickupCode: 'AKP-10238',
-    status: 'SCHEDULED',
-    scheduledDate: '2026-10-05',
-    timeSlotSnapshot: { displayLabel: '10:00 AM – 12:00 PM' },
-    locationLabel: 'Madhura Nagar, Vijayawada',
-  },
-  {
-    id: 'akp-10231',
-    pickupCode: 'AKP-10231',
-    status: 'REQUESTED',
-    scheduledDate: '2026-10-06',
-    timeSlotSnapshot: { displayLabel: '9:00 AM – 11:00 AM' },
-    locationLabel: 'Suryaraopet, Vijayawada',
-  },
-];
-
-const SEED_COMPLETED_PICKUPS: PickupItemData[] = [
-  {
-    id: 'akp-10198',
-    pickupCode: 'AKP-10198',
-    status: 'COMPLETED',
-    scheduledDate: '2026-09-28',
-    timeSlotSnapshot: { displayLabel: '10:00 AM – 11:30 AM' },
-    locationLabel: 'Madhura Nagar, Vijayawada',
-  },
-  {
-    id: 'akp-10175',
-    pickupCode: 'AKP-10175',
-    status: 'COMPLETED',
-    scheduledDate: '2026-09-21',
-    timeSlotSnapshot: { displayLabel: '9:00 AM – 11:00 AM' },
-    locationLabel: 'Suryaraopet, Vijayawada',
-  },
-  {
-    id: 'akp-10160',
-    pickupCode: 'AKP-10160',
-    status: 'COMPLETED',
-    scheduledDate: '2026-09-12',
-    timeSlotSnapshot: { displayLabel: '11:00 AM – 01:00 PM' },
-    locationLabel: 'Benz Circle, Vijayawada',
-  },
-  {
-    id: 'akp-10142',
-    pickupCode: 'AKP-10142',
-    status: 'COMPLETED',
-    scheduledDate: '2026-09-05',
-    timeSlotSnapshot: { displayLabel: '9:00 AM – 10:30 AM' },
-    locationLabel: 'Madhura Nagar, Vijayawada',
-  },
-  {
-    id: 'akp-10110',
-    pickupCode: 'AKP-10110',
-    status: 'COMPLETED',
-    scheduledDate: '2026-08-28',
-    timeSlotSnapshot: { displayLabel: '10:00 AM – 12:00 PM' },
-    locationLabel: 'Guru Nanak Colony, Vijayawada',
-  },
-];
-
-const SEED_CANCELLED_PICKUPS: PickupItemData[] = [
-  {
-    id: 'akp-10168',
-    pickupCode: 'AKP-10168',
-    status: 'CANCELLED',
-    scheduledDate: '2026-09-18',
-    timeSlotSnapshot: { displayLabel: '9:00 AM – 11:00 AM' },
-    locationLabel: 'Madhura Nagar, Vijayawada',
-  },
-];
 
 export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
   onOpenPickupDetails,
@@ -106,16 +23,31 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedInvoicePickup, setSelectedInvoicePickup] = useState<PickupItemData | null>(null);
 
-  // Fetch live pickups from backend API
+  // Fetch real pickups from backend API
   const fetchPickups = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get<PickupItemData[]>('/customer/pickups');
+      const res = await apiClient.get<any[]>('/customer/pickups');
       if (res.success && Array.isArray(res.data)) {
-        setLivePickups(res.data);
+        const mapped: PickupItemData[] = res.data.map((item: any) => ({
+          id: item._id || item.id,
+          pickupCode: item.orderNumber || `AKP-${(item._id || item.id).slice(-5).toUpperCase()}`,
+          status: item.status || 'REQUESTED',
+          scheduledDate: item.scheduledSlot?.date || 'Today',
+          timeSlotSnapshot: { displayLabel: item.scheduledSlot?.window || 'Standard Window' },
+          locationLabel: typeof item.address === 'string' ? item.address : item.address?.streetAddress || item.address?.locality || 'Address on record',
+          assignment: item.assignedEmployeeProfileId ? {
+            employeeName: item.assignedEmployeeProfileId.fullName || 'Field Driver',
+            employeeCode: item.assignedEmployeeProfileId.employeeCode,
+          } : undefined,
+          totals: item.totals,
+        }));
+        setLivePickups(mapped);
+      } else {
+        setLivePickups([]);
       }
     } catch {
-      // Keep seed data on network failure
+      setLivePickups([]);
     } finally {
       setIsLoading(false);
     }
@@ -125,215 +57,151 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
     fetchPickups();
   }, [fetchPickups]);
 
-  // Combine live pickups with seed mock pickups
+  // Real database dynamic lists
   const scheduledList = useMemo(() => {
-    const liveScheduled = livePickups.filter((p) =>
-      ['REQUESTED', 'SCHEDULED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(p.status)
+    return livePickups.filter((p) =>
+      ['REQUESTED', 'SCHEDULED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'VERIFIED'].includes(p.status)
     );
-    // Combine live with seed items, ensuring no duplicates by pickupCode
-    const codes = new Set(liveScheduled.map((p) => p.pickupCode));
-    const merged = [...liveScheduled];
-    for (const s of SEED_SCHEDULED_PICKUPS) {
-      if (!codes.has(s.pickupCode)) merged.push(s);
-    }
-    return merged;
   }, [livePickups]);
 
   const completedList = useMemo(() => {
-    const liveCompleted = livePickups.filter((p) =>
-      ['COMPLETED', 'SETTLED', 'INVOICED'].includes(p.status)
-    );
-    const codes = new Set(liveCompleted.map((p) => p.pickupCode));
-    const merged = [...liveCompleted];
-    for (const s of SEED_COMPLETED_PICKUPS) {
-      if (!codes.has(s.pickupCode)) merged.push(s);
-    }
-    return merged;
+    return livePickups.filter((p) => p.status === 'COMPLETED');
   }, [livePickups]);
 
   const cancelledList = useMemo(() => {
-    const liveCancelled = livePickups.filter((p) =>
-      ['CANCELLED', 'FAILED'].includes(p.status)
-    );
-    const codes = new Set(liveCancelled.map((p) => p.pickupCode));
-    const merged = [...liveCancelled];
-    for (const s of SEED_CANCELLED_PICKUPS) {
-      if (!codes.has(s.pickupCode)) merged.push(s);
-    }
-    return merged;
+    return livePickups.filter((p) => p.status === 'CANCELLED');
   }, [livePickups]);
 
-  const currentList =
-    activeTab === 'scheduled'
-      ? scheduledList
-      : activeTab === 'completed'
-      ? completedList
-      : cancelledList;
-
-  const handleCardClick = (pickup: PickupItemData) => {
-    if (activeTab === 'completed' || pickup.status === 'COMPLETED' || pickup.status === 'SETTLED') {
-      setSelectedInvoicePickup(pickup);
-    } else {
-      onOpenPickupDetails(pickup);
-    }
-  };
-
   return (
-    <div className="w-full flex flex-col space-y-4 pb-20 animate-in fade-in">
-      {/* 1. Header with Scrap Truck Illustration (Image 5) */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs relative overflow-hidden flex items-center justify-between">
-        <div className="relative z-10 pr-2 max-w-[240px]">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              Pickups Hub
-            </span>
-            <button
-              onClick={fetchPickups}
-              disabled={isLoading}
-              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin text-emerald-600' : ''}`} />
-            </button>
-          </div>
-
-          <h1 className="text-xl font-black text-slate-900 tracking-tight leading-tight">
-            My Pickups
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
-            Track your scheduled and completed scrap pickups.
+    <div className="space-y-4 pb-24">
+      {/* Header */}
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">My Pickups</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Track active scrap bookings and view invoice receipts
           </p>
         </div>
 
-        {/* Truck Graphic Illustration matching Image 5 Header */}
-        <div className="relative shrink-0 w-28 h-20 flex items-center justify-center">
-          {/* Sun */}
-          <div className="absolute top-1 right-8 w-6 h-6 rounded-full bg-amber-400/80 shadow-xs" />
-          {/* Skyline backdrop silhouette */}
-          <div className="absolute bottom-2 right-0 flex items-end gap-1 opacity-20 text-emerald-950 pointer-events-none text-xs">
-            🏢 🏬 🌳
-          </div>
-          {/* Scrap Electric Truck */}
-          <div className="relative z-10 transform scale-105">
-            <div className="bg-[#0A3D2B] text-white rounded-xl px-2.5 py-1.5 text-center shadow-md border border-emerald-600/40">
-              <span className="text-[8px] font-black tracking-widest block text-emerald-300">ASLI</span>
-              <span className="text-[9px] font-black tracking-widest block text-white -mt-1">KAATA</span>
-            </div>
-            {/* Truck Cab & Wheels */}
-            <div className="flex items-center justify-between px-1 -mt-1">
-              <span className="text-sm">🚛</span>
-              <span className="text-[9px] font-bold text-amber-500">⚡</span>
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={fetchPickups}
+          disabled={isLoading}
+          className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+          title="Refresh pickups"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-emerald-800' : ''}`} />
+        </button>
       </div>
 
-      {/* 2. Segmented Tab Filter Pills (Image 5) */}
-      <div className="flex items-center justify-between gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/80">
-        {/* Tab 1: Scheduled */}
+      {/* Tabs */}
+      <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl">
         <button
           onClick={() => setActiveTab('scheduled')}
-          className={`flex-1 py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'scheduled'
-              ? 'bg-[#0A3D2B] text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              ? 'bg-white text-emerald-900 shadow-xs'
+              : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          <span>Scheduled</span>
-          <span
-            className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-              activeTab === 'scheduled'
-                ? 'bg-emerald-900/50 text-emerald-200'
-                : 'bg-slate-200 text-slate-600'
-            }`}
-          >
-            {scheduledList.length}
-          </span>
+          Scheduled {scheduledList.length > 0 && `(${scheduledList.length})`}
         </button>
-
-        {/* Tab 2: Completed */}
         <button
           onClick={() => setActiveTab('completed')}
-          className={`flex-1 py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'completed'
-              ? 'bg-[#0A3D2B] text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              ? 'bg-white text-emerald-900 shadow-xs'
+              : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          <span>Completed</span>
-          <span
-            className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-              activeTab === 'completed'
-                ? 'bg-emerald-900/50 text-emerald-200'
-                : 'bg-slate-200 text-slate-600'
-            }`}
-          >
-            {completedList.length}
-          </span>
+          Completed {completedList.length > 0 && `(${completedList.length})`}
         </button>
-
-        {/* Tab 3: Cancelled (Vibrant Red when active matching Image 5 Screen 3) */}
         <button
           onClick={() => setActiveTab('cancelled')}
-          className={`flex-1 py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'cancelled'
-              ? 'bg-[#DC2626] text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              ? 'bg-white text-emerald-900 shadow-xs'
+              : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          <span>Cancelled</span>
-          <span
-            className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-              activeTab === 'cancelled'
-                ? 'bg-rose-950/40 text-rose-200'
-                : 'bg-slate-200 text-slate-600'
-            }`}
-          >
-            {cancelledList.length}
-          </span>
+          Cancelled
         </button>
       </div>
 
-      {/* 3. Pickups List Area */}
-      <div className="space-y-3">
-        {currentList.map((pickup) => (
-          <PickupCard
-            key={pickup.id || pickup._id || pickup.pickupCode}
-            pickup={pickup}
-            onClick={() => handleCardClick(pickup)}
-          />
-        ))}
-
-        {/* If Cancelled Tab: Display Empty Cancelled State below list matching Image 5 Screen 3 */}
-        {activeTab === 'cancelled' && (
-          <EmptyCancelledState />
-        )}
-
-        {/* Empty state for Scheduled tab if 0 */}
-        {activeTab === 'scheduled' && scheduledList.length === 0 && (
-          <div className="py-12 text-center bg-white rounded-3xl border border-slate-200 p-6 space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#0A3D2B] flex items-center justify-center mx-auto text-xl">
-              📦
+      {/* Tab Contents */}
+      {isLoading ? (
+        <div className="py-16 text-center text-slate-400">
+          <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <p className="text-xs font-medium">Loading your bookings...</p>
+        </div>
+      ) : activeTab === 'scheduled' ? (
+        scheduledList.length > 0 ? (
+          <div className="space-y-3">
+            {scheduledList.map((pickup) => (
+              <PickupCard
+                key={pickup.id}
+                pickup={pickup}
+                onClick={() => onOpenPickupDetails(pickup)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="py-14 text-center px-4 bg-white rounded-3xl border border-slate-100 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto mb-3">
+              <Package className="w-6 h-6 stroke-[1.8]" />
             </div>
-            <h3 className="text-sm font-black text-slate-900">No Scheduled Pickups</h3>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto">
-              You don&apos;t have any active scrap pickups scheduled right now.
+            <h4 className="text-sm font-bold text-slate-800 mb-1">No Active Pickups</h4>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto mb-4">
+              You don't have any pending scrap collections scheduled right now.
             </p>
             <button
               onClick={onRequestNewPickup}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0A3D2B] text-white rounded-xl text-xs font-bold shadow-xs hover:bg-[#06291C]"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold shadow-md hover:bg-[#072c1f] transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              Book a Pickup
+              <Plus className="w-4 h-4" />
+              <span>Schedule Scrap Pickup</span>
             </button>
           </div>
-        )}
-      </div>
+        )
+      ) : activeTab === 'completed' ? (
+        completedList.length > 0 ? (
+          <div className="space-y-3">
+            {completedList.map((pickup) => (
+              <PickupCard
+                key={pickup.id}
+                pickup={pickup}
+                onClick={() => onOpenPickupDetails(pickup)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="py-14 text-center px-4 bg-white rounded-3xl border border-slate-100 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <Package className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-800 mb-1">No Completed Orders Yet</h4>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto">
+              Once scrap is weighed and paid at your doorstep, digital receipts will appear here.
+            </p>
+          </div>
+        )
+      ) : cancelledList.length > 0 ? (
+        <div className="space-y-3">
+          {cancelledList.map((pickup) => (
+            <PickupCard
+              key={pickup.id}
+              pickup={pickup}
+              onClick={() => onOpenPickupDetails(pickup)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyCancelledState />
+      )}
 
-      {/* Digital Invoice Modal */}
+      {/* Invoice Modal */}
       {selectedInvoicePickup && (
         <InvoiceModal
-          isOpen={true}
+          isOpen={Boolean(selectedInvoicePickup)}
           pickupId={selectedInvoicePickup._id || selectedInvoicePickup.id || ''}
           pickupCode={selectedInvoicePickup.pickupCode}
           onClose={() => setSelectedInvoicePickup(null)}

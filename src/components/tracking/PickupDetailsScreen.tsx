@@ -68,47 +68,14 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   onBack,
   onPickupCancelled,
 }) => {
-  // Default mock pickup data matching Image 4
-  const [pickup, setPickup] = useState<PickupDetailData>(() => {
+  const [pickup, setPickup] = useState<PickupDetailData | null>(() => {
     if (initialPickup) {
       return {
         ...initialPickup,
         categories: normalizeCategories(initialPickup.categories),
       };
     }
-    return {
-      id: pickupId || 'demo_pickup_1001',
-      pickupCode: 'AKP-84920',
-      status: 'REQUESTED', // Screen 1: REQUESTED, Screen 2: SCHEDULED, Screen 3: ASSIGNED
-      scheduledDate: '2026-10-04',
-      timeSlotSnapshot: {
-        startTime: '09:00',
-        endTime: '11:00',
-        displayLabel: '9:00 AM – 11:00 AM',
-      },
-      timeSlotId: 'slot_m1',
-      categories: ['cat_paper', 'cat_plastic', 'cat_metal'],
-      estimatedWeightSnapshot: {
-        name: 'Medium',
-        displayLabel: '20 – 30 kg',
-      },
-      settlementPreference: 'CASH',
-      assignment: {
-        employeeName: 'Ramesh Kumar',
-        employeeCode: 'AKP-EMP-0247',
-        employeePhone: '9876543210',
-        vehicleType: 'Ape Auto',
-        vehicleNumber: 'AP 16 TX 4021',
-      },
-      preparation: {
-        tools: ['Ladder'],
-        remarks: 'Scrap kept near main gate. Please call 10 mins before arrival.',
-      },
-      photos: [
-        { fileUrl: 'https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=150&auto=format&fit=crop&q=80' },
-        { fileUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=150&auto=format&fit=crop&q=80' },
-      ],
-    };
+    return null;
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -121,14 +88,14 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const currentPickupId = pickup._id || pickup.id || pickupId || '';
+  const currentPickupId = pickup?._id || pickup?.id || pickupId || '';
 
   // Fetch fresh pickup details from backend API
   const fetchPickupDetails = useCallback(async () => {
     if (!currentPickupId || currentPickupId.startsWith('demo_')) return;
     setIsLoading(true);
     try {
-      const res = await apiClient.get<PickupDetailData>(`/pickups/${currentPickupId}`);
+      const res = await apiClient.get<PickupDetailData>(`/customer/pickups/${currentPickupId}`);
       if (res.success && res.data) {
         setPickup({
           ...res.data,
@@ -167,28 +134,34 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
     // Listen for live status transitions
     socket.on('pickup.status_changed', (payload: any) => {
       if (payload?.status) {
-        setPickup((prev) => ({
-          ...prev,
-          status: payload.status,
-          scheduledDate: payload.scheduledDate || prev.scheduledDate,
-        }));
+        setPickup((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            status: payload.status,
+            scheduledDate: payload.scheduledDate || prev.scheduledDate,
+          };
+        });
         showToast(`Pickup status updated: ${payload.status}`);
       }
     });
 
     // Listen for live employee assignment
     socket.on('pickup.assigned', (payload: any) => {
-      setPickup((prev) => ({
-        ...prev,
-        status: 'ASSIGNED',
-        assignment: {
-          employeeName: payload?.employeeName || 'Ramesh Kumar',
-          employeeCode: payload?.employeeCode || 'AKP-EMP-0247',
-          employeePhone: payload?.employeePhone || '9876543210',
-          vehicleType: payload?.vehicleType || 'Ape Auto',
-          vehicleNumber: payload?.vehicleNumber || 'AP 16 TX 4021',
-        },
-      }));
+      setPickup((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          status: 'ASSIGNED',
+          assignment: {
+            employeeName: payload?.employeeName || 'Ramesh Kumar',
+            employeeCode: payload?.employeeCode || 'AKP-EMP-0247',
+            employeePhone: payload?.employeePhone || '9876543210',
+            vehicleType: payload?.vehicleType || 'Ape Auto',
+            vehicleNumber: payload?.vehicleNumber || 'AP 16 TX 4021',
+          },
+        };
+      });
       showToast('An employee has been assigned to your pickup!');
     });
 
@@ -201,7 +174,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   useEffect(() => {
     if (initialPickup) {
       setPickup((prev) => ({
-        ...prev,
+        ...(prev || {}),
         ...initialPickup,
         categories: normalizeCategories(initialPickup.categories),
       }));
@@ -218,7 +191,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
   // Handle category update
   const handleUpdateCategories = async (newCategoryIds: string[]) => {
-    setPickup((prev) => ({ ...prev, categories: newCategoryIds }));
+    setPickup((prev) => (prev ? { ...prev, categories: newCategoryIds } : null));
     if (!currentPickupId.startsWith('demo_')) {
       try {
         const res = await apiClient.patch(`/customer/pickups/${currentPickupId}/categories`, {
@@ -238,13 +211,16 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   // Handle rescheduling
   const handleReschedule = async (newDate: string, newSlotId?: string, reason?: string) => {
     const slotObj = newSlotId ? { startTime: '09:00', endTime: '11:00', displayLabel: '9:00 AM – 11:00 AM' } : undefined;
-    setPickup((prev) => ({
-      ...prev,
-      scheduledDate: newDate,
-      timeSlotId: newSlotId || prev.timeSlotId,
-      timeSlotSnapshot: slotObj || prev.timeSlotSnapshot,
-      status: prev.status === 'REQUESTED' ? 'SCHEDULED' : prev.status,
-    }));
+    setPickup((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        scheduledDate: newDate,
+        timeSlotId: newSlotId || prev.timeSlotId,
+        timeSlotSnapshot: slotObj || prev.timeSlotSnapshot,
+        status: prev.status === 'REQUESTED' ? 'SCHEDULED' : prev.status,
+      };
+    });
 
     if (!currentPickupId.startsWith('demo_')) {
       try {
@@ -271,13 +247,16 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
     remarks?: string;
     photoUrls?: string[];
   }) => {
-    setPickup((prev) => ({
-      ...prev,
-      preparation: {
-        tools: payload.tools ?? prev.preparation?.tools ?? [],
-        remarks: payload.remarks ?? prev.preparation?.remarks ?? '',
-      },
-    }));
+    setPickup((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        preparation: {
+          tools: payload.tools ?? prev.preparation?.tools ?? [],
+          remarks: payload.remarks ?? prev.preparation?.remarks ?? '',
+        },
+      };
+    });
 
     if (!currentPickupId.startsWith('demo_')) {
       try {
@@ -293,7 +272,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
   // Handle cancellation
   const handleCancelPickup = async (reason: string) => {
-    setPickup((prev) => ({ ...prev, status: 'CANCELLED' }));
+    setPickup((prev) => (prev ? { ...prev, status: 'CANCELLED' } : null));
     if (!currentPickupId.startsWith('demo_')) {
       try {
         await apiClient.post(`/customer/pickups/${currentPickupId}/cancel`, { reason });
@@ -308,7 +287,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
   // Format date helper
   const formattedDate = React.useMemo(() => {
-    if (!pickup.scheduledDate) return 'Sat, 04 Oct 2026';
+    if (!pickup?.scheduledDate) return '';
     try {
       const d = new Date(pickup.scheduledDate);
       if (isNaN(d.getTime())) return pickup.scheduledDate;
@@ -319,19 +298,22 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
         year: 'numeric',
       });
     } catch {
-      return pickup.scheduledDate;
+      return pickup?.scheduledDate || '';
     }
-  }, [pickup.scheduledDate]);
+  }, [pickup?.scheduledDate]);
 
-  const isAssigned =
-    pickup.status === 'ASSIGNED' ||
-    pickup.status === 'ON_THE_WAY' ||
-    pickup.status === 'ARRIVED' ||
-    pickup.status === 'VERIFIED' ||
-    pickup.status === 'IN_PROGRESS' ||
-    pickup.status === 'COMPLETED';
+  const isAssigned = Boolean(
+    pickup && (
+      pickup.status === 'ASSIGNED' ||
+      pickup.status === 'ON_THE_WAY' ||
+      pickup.status === 'ARRIVED' ||
+      pickup.status === 'VERIFIED' ||
+      pickup.status === 'IN_PROGRESS' ||
+      pickup.status === 'COMPLETED'
+    )
+  );
 
-  const isLocked = pickup.status === 'COMPLETED' || pickup.status === 'CANCELLED';
+  const isLocked = Boolean(pickup && (pickup.status === 'COMPLETED' || pickup.status === 'CANCELLED'));
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] pb-10 flex flex-col">
@@ -360,7 +342,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
             Pickup Details
           </h1>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-            ID: {pickup.pickupCode}
+            ID: {pickup?.pickupCode || '...'}
           </p>
         </div>
 
@@ -376,49 +358,32 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 px-4 py-3 max-w-md mx-auto w-full">
-        {/* Quick Testing Bar for Image 4 States */}
-        <div className="mb-3 px-2 py-1.5 bg-slate-100 rounded-xl flex items-center justify-between text-[10px] text-slate-500 font-medium">
-          <span>Image 4 Preview State:</span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setPickup((p) => ({ ...p, status: 'REQUESTED' }))}
-              className={`px-2 py-0.5 rounded-md font-bold transition-colors ${
-                pickup.status === 'REQUESTED'
-                  ? 'bg-[#0A3D2B] text-white'
-                  : 'bg-white hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              1. Placed
-            </button>
-            <button
-              onClick={() => setPickup((p) => ({ ...p, status: 'SCHEDULED' }))}
-              className={`px-2 py-0.5 rounded-md font-bold transition-colors ${
-                pickup.status === 'SCHEDULED'
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-white hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              2. Scheduled
-            </button>
-            <button
-              onClick={() => setPickup((p) => ({ ...p, status: 'ASSIGNED' }))}
-              className={`px-2 py-0.5 rounded-md font-bold transition-colors ${
-                isAssigned
-                  ? 'bg-emerald-700 text-white'
-                  : 'bg-white hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              3. Assigned
-            </button>
-          </div>
+      {isLoading && !pickup ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center my-auto">
+          <RefreshCw className="w-8 h-8 text-emerald-600 animate-spin mb-3" />
+          <p className="text-xs font-bold text-slate-500">Fetching live pickup details...</p>
         </div>
+      ) : !pickup ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
+          <p className="text-sm font-bold text-slate-700">Pickup Record Not Found</p>
+          <p className="text-xs text-slate-400 mt-1 max-w-xs">
+            This pickup could not be located on the server. Please verify your order list.
+          </p>
+          <button
+            onClick={onBack}
+            className="mt-4 px-4 py-2 bg-[#0A3D2B] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-[#06291C]"
+          >
+            Return to My Pickups
+          </button>
+        </div>
+      ) : (
+        <>
+          <main className="flex-1 px-4 py-3 max-w-md mx-auto w-full">
+            {/* 1. Lifecycle 3-Step Stepper (Image 4) */}
+            <LifecycleStepper status={pickup.status} />
 
-        {/* 1. Lifecycle 3-Step Stepper (Image 4) */}
-        <LifecycleStepper status={pickup.status} />
-
-        {/* 2. Status Notification Banner (Image 4) */}
-        <StatusNotificationBanner status={pickup.status} />
+            {/* 2. Status Notification Banner (Image 4) */}
+            <StatusNotificationBanner status={pickup.status} />
 
         {/* 3. Assigned Employee Contact Card (Only in Screen 3 Assigned State) */}
         {isAssigned && (
@@ -515,24 +480,26 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
             </button>
           </div>
         )}
-      </main>
+        </main>
 
-      {/* Reschedule Modal */}
-      <RescheduleModal
-        isOpen={isRescheduleOpen}
-        currentDate={pickup.scheduledDate}
-        currentSlotId={pickup.timeSlotId}
-        onClose={() => setIsRescheduleOpen(false)}
-        onConfirmReschedule={handleReschedule}
-      />
+        {/* Reschedule Modal */}
+        <RescheduleModal
+          isOpen={isRescheduleOpen}
+          currentDate={pickup.scheduledDate}
+          currentSlotId={pickup.timeSlotId}
+          onClose={() => setIsRescheduleOpen(false)}
+          onConfirmReschedule={handleReschedule}
+        />
 
-      {/* Cancel Confirmation Modal */}
-      <CancelPickupModal
-        isOpen={isCancelModalOpen}
-        pickupCode={pickup.pickupCode}
-        onClose={() => setIsCancelModalOpen(false)}
-        onConfirmCancel={handleCancelPickup}
-      />
-    </div>
-  );
+        {/* Cancel Confirmation Modal */}
+        <CancelPickupModal
+          isOpen={isCancelModalOpen}
+          pickupCode={pickup.pickupCode}
+          onClose={() => setIsCancelModalOpen(false)}
+          onConfirmCancel={handleCancelPickup}
+        />
+      </>
+    )}
+  </div>
+);
 };
