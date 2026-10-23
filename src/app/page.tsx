@@ -23,6 +23,7 @@ import { PickupDetailsScreen } from '../components/tracking/PickupDetailsScreen'
 import { MyPickupsScreen } from '../components/pickups/MyPickupsScreen';
 import { ProfileScreen } from '../components/profile/ProfileScreen';
 import { BrandLogo } from '../components/common/BrandLogo';
+import { ServerDownScreen } from '../components/common/ServerDownScreen';
 import { apiClient } from '../lib/api-client';
 import { Scale, LogOut, Package, ArrowRight, RefreshCw, Calendar, Clock, Sparkles } from 'lucide-react';
 
@@ -35,6 +36,28 @@ function CustomerApp() {
   const [selectedPickupForDetails, setSelectedPickupForDetails] = useState<any | null>(null);
   const [myPickups, setMyPickups] = useState<any[]>([]);
   const [isLoadingPickups, setIsLoadingPickups] = useState(false);
+  const [isServerDown, setIsServerDown] = useState(false);
+  const [serverErrorDetails, setServerErrorDetails] = useState('');
+  const [isRetryingServer, setIsRetryingServer] = useState(false);
+
+  // Monitor backend server health and network requests
+  useEffect(() => {
+    // Check health once on startup
+    apiClient.checkHealth();
+
+    const unsub = apiClient.onServerStatusChange((down, details) => {
+      setIsServerDown(down);
+      if (details) setServerErrorDetails(details);
+    });
+
+    return () => unsub();
+  }, []);
+
+  const handleRetryServer = async () => {
+    setIsRetryingServer(true);
+    await apiClient.checkHealth();
+    setIsRetryingServer(false);
+  };
 
   const { location, isSheetOpen, closeSheet, setLocation } = useLocation();
   const { user, logout } = useAuth();
@@ -116,6 +139,17 @@ function CustomerApp() {
   const handlePersonalizationComplete = () => {
     setCurrentStep('app');
   };
+
+  // Global Server Down / Maintenance Screen
+  if (isServerDown) {
+    return (
+      <ServerDownScreen
+        onRetry={handleRetryServer}
+        isRetrying={isRetryingServer}
+        errorDetails={serverErrorDetails}
+      />
+    );
+  }
 
   // Splash Loading
   if (currentStep === 'loading') {

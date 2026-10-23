@@ -114,34 +114,10 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
       if (res.success && res.data) {
         onSuccess(res.data);
       } else {
-        // Graceful fallback for demonstration with client code generation
-        const mockConfirmed = {
-          pickupCode: `AKP-${Math.floor(10000 + Math.random() * 90000)}`,
-          status: 'REQUESTED',
-          scheduledDate: state.selectedDate,
-          timeSlot: selectedSlot?.displayLabel || '11:00 AM – 1:00 PM',
-          location: location.formattedAddress,
-          categories: selectedCategories.map((c) => c.id),
-          weight: selectedWeight?.label || '10 – 20 kg',
-          paymentPreference: state.paymentPreference === 'CASH' ? 'Cash on pickup' : 'UPI Transfer',
-          createdAt: new Date().toISOString(),
-        };
-        onSuccess(mockConfirmed);
+        setErrorMessage(res.error || 'Failed to submit pickup request. Please try again.');
       }
-    } catch {
-      // Local robust fallback
-      const mockConfirmed = {
-        pickupCode: `AKP-${Math.floor(10000 + Math.random() * 90000)}`,
-        status: 'REQUESTED',
-        scheduledDate: state.selectedDate,
-        timeSlot: selectedSlot?.displayLabel || '11:00 AM – 1:00 PM',
-        location: location.formattedAddress,
-        categories: selectedCategories.map((c) => c.id),
-        weight: selectedWeight?.label || '10 – 20 kg',
-        paymentPreference: state.paymentPreference === 'CASH' ? 'Cash on pickup' : 'UPI Transfer',
-        createdAt: new Date().toISOString(),
-      };
-      onSuccess(mockConfirmed);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Network error while booking pickup. Please check your connection.');
     } finally {
       setIsLoading(false);
     }

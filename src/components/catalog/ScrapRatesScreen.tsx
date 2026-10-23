@@ -68,28 +68,41 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
   const [rates, setRates] = useState<ScrapRateItem[]>(DEFAULT_CATALOG);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch live catalog from backend if available
+  // Fetch live catalog from backend
   useEffect(() => {
     async function fetchLiveCatalog() {
       setIsLoading(true);
       try {
-        const res = await apiClient.get('/catalog/products');
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const mapped: ScrapRateItem[] = res.data.map((p: any) => ({
-            id: p._id,
-            name: p.name,
-            category: p.category?.code?.toLowerCase() || 'others',
-            subLabel: p.description || 'Verified scrap material',
-            pricePerKg: p.activeRate ? p.activeRate.ratePerKgPaise / 100 : 25,
-            unit: 'kg',
-            trend: '+₹1.50',
-            isUp: true,
-            emoji: p.category?.code === 'PAPER' ? '📰' : p.category?.code === 'PLASTIC' ? '🍾' : '⚙️',
-          }));
-          setRates(mapped);
+        const res = await apiClient.get('/catalog');
+        if (res.success && res.data?.categories) {
+          const mapped: ScrapRateItem[] = [];
+          res.data.categories.forEach((cat: any) => {
+            const catCode = cat.code?.toLowerCase() || cat.name?.toLowerCase() || 'others';
+            if (Array.isArray(cat.products)) {
+              cat.products.forEach((p: any) => {
+                const price = p.currentRate?.ratePerKgPaise
+                  ? p.currentRate.ratePerKgPaise / 100
+                  : 25;
+                mapped.push({
+                  id: p._id || p.id,
+                  name: p.name,
+                  category: catCode.includes('metal') ? 'metal' : catCode.includes('paper') ? 'paper' : catCode.includes('plastic') ? 'plastic' : catCode.includes('waste') ? 'ewaste' : 'others',
+                  subLabel: `Verified ${cat.name} material`,
+                  pricePerKg: price,
+                  unit: p.unit || 'kg',
+                  trend: '+₹1.50',
+                  isUp: true,
+                  emoji: catCode.includes('paper') ? '📰' : catCode.includes('plastic') ? '🍾' : catCode.includes('metal') ? '⚙️' : catCode.includes('ewaste') ? '💻' : '♻️',
+                });
+              });
+            }
+          });
+          if (mapped.length > 0) {
+            setRates(mapped);
+          }
         }
       } catch {
-        // Retain verified default catalog
+        // Retain verified fallback
       } finally {
         setIsLoading(false);
       }
