@@ -9,6 +9,8 @@ import {
   RefreshCw,
   Clock,
   Sparkles,
+  QrCode,
+  CheckCircle2,
 } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import { LifecycleStepper, PickupLifecycleStatus } from './LifecycleStepper';
@@ -54,12 +56,12 @@ interface PickupDetailsScreenProps {
 }
 
 const normalizeCategories = (raw: any): any[] => {
-  if (!raw) return ['cat_paper', 'cat_metal'];
+  if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   if (typeof raw === 'string') {
     return raw.split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean);
   }
-  return ['cat_paper', 'cat_metal'];
+  return [];
 };
 
 export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
@@ -82,6 +84,9 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [qrValue, setQrValue] = useState<string>('');
+  const [summary, setSummary] = useState<any>(null);
+  const [isApproving, setIsApproving] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -92,7 +97,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
   // Fetch fresh pickup details from backend API
   const fetchPickupDetails = useCallback(async () => {
-    if (!currentPickupId || currentPickupId.startsWith('demo_')) return;
+    if (!currentPickupId) return;
     setIsLoading(true);
     try {
       const res = await apiClient.get<PickupDetailData>(`/customer/pickups/${currentPickupId}`);
@@ -154,11 +159,11 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           ...prev,
           status: 'ASSIGNED',
           assignment: {
-            employeeName: payload?.employeeName || 'Ramesh Kumar',
-            employeeCode: payload?.employeeCode || 'AKP-EMP-0247',
-            employeePhone: payload?.employeePhone || '9876543210',
-            vehicleType: payload?.vehicleType || 'Ape Auto',
-            vehicleNumber: payload?.vehicleNumber || 'AP 16 TX 4021',
+            employeeName: payload?.employeeName || 'Unassigned',
+            employeeCode: payload?.employeeCode,
+            employeePhone: payload?.employeePhone,
+            vehicleType: payload?.vehicleType,
+            vehicleNumber: payload?.vehicleNumber,
           },
         };
       });
@@ -191,53 +196,29 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
   // Handle category update
   const handleUpdateCategories = async (newCategoryIds: string[]) => {
-    setPickup((prev) => (prev ? { ...prev, categories: newCategoryIds } : null));
-    if (!currentPickupId.startsWith('demo_')) {
-      try {
-        const res = await apiClient.patch(`/customer/pickups/${currentPickupId}/categories`, {
-          categoryIds: newCategoryIds,
-        });
-        if (res.success) {
-          showToast('Categories updated successfully');
-        }
-      } catch {
-        showToast('Updated locally');
-      }
+    const res = await apiClient.patch(`/customer/pickups/${currentPickupId}/categories`, {
+      categoryIds: newCategoryIds,
+    });
+    if (res.success) {
+      setPickup((prev) => (prev ? { ...prev, categories: newCategoryIds } : null));
+      showToast('Categories updated successfully');
     } else {
-      showToast('Categories updated');
+      showToast('Could not update categories');
     }
   };
 
   // Handle rescheduling
   const handleReschedule = async (newDate: string, newSlotId?: string, reason?: string) => {
-    const slotObj = newSlotId ? { startTime: '09:00', endTime: '11:00', displayLabel: '9:00 AM – 11:00 AM' } : undefined;
-    setPickup((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        scheduledDate: newDate,
-        timeSlotId: newSlotId || prev.timeSlotId,
-        timeSlotSnapshot: slotObj || prev.timeSlotSnapshot,
-        status: prev.status === 'REQUESTED' ? 'SCHEDULED' : prev.status,
-      };
+    const res = await apiClient.patch(`/customer/pickups/${currentPickupId}/reschedule`, {
+      scheduledDate: newDate,
+      timeSlotId: newSlotId,
+      reason,
     });
-
-    if (!currentPickupId.startsWith('demo_')) {
-      try {
-        const res = await apiClient.patch(`/customer/pickups/${currentPickupId}/reschedule`, {
-          scheduledDate: newDate,
-          timeSlotId: newSlotId,
-          reason,
-        });
-        if (res.success) {
-          showToast('Pickup rescheduled successfully');
-          fetchPickupDetails();
-        }
-      } catch {
-        showToast('Rescheduled locally');
-      }
+    if (res.success) {
+      showToast('Pickup rescheduled successfully');
+      await fetchPickupDetails();
     } else {
-      showToast('Pickup rescheduled to ' + newDate);
+      showToast('Could not reschedule pickup');
     }
   };
 
@@ -247,37 +228,26 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
     remarks?: string;
     photoUrls?: string[];
   }) => {
-    setPickup((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        preparation: {
-          tools: payload.tools ?? prev.preparation?.tools ?? [],
-          remarks: payload.remarks ?? prev.preparation?.remarks ?? '',
-        },
-      };
+    const res = await apiClient.patch(`/customer/pickups/${currentPickupId}/preparation`, {
+      tools: payload.tools,
+      remarks: payload.remarks,
     });
-
-    if (!currentPickupId.startsWith('demo_')) {
-      try {
-        await apiClient.patch(`/customer/pickups/${currentPickupId}/preparation`, payload);
-        showToast('Information saved');
-      } catch {
-        showToast('Saved locally');
-      }
-    } else {
+    if (res.success) {
+      await fetchPickupDetails();
       showToast('Information saved');
+    } else {
+      showToast('Could not save information');
     }
   };
 
   // Handle cancellation
   const handleCancelPickup = async (reason: string) => {
-    setPickup((prev) => (prev ? { ...prev, status: 'CANCELLED' } : null));
-    if (!currentPickupId.startsWith('demo_')) {
-      try {
-        await apiClient.post(`/customer/pickups/${currentPickupId}/cancel`, { reason });
-      } catch {}
+    const res = await apiClient.post(`/customer/pickups/${currentPickupId}/cancel`, { reason });
+    if (!res.success) {
+      showToast('Could not cancel pickup');
+      return;
     }
+    setPickup((prev) => (prev ? { ...prev, status: 'CANCELLED' } : null));
     showToast('Pickup request cancelled');
     setTimeout(() => {
       if (onPickupCancelled) onPickupCancelled();
@@ -313,7 +283,42 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
     )
   );
 
-  const isLocked = Boolean(pickup && (pickup.status === 'COMPLETED' || pickup.status === 'CANCELLED'));
+  const isLocked = Boolean(pickup && [
+    'IN_PROGRESS', 'MEASURED', 'SUMMARY_READY', 'CUSTOMER_CONFIRMED',
+    'SETTLED', 'COMPLETED', 'CANCELLED', 'FAILED',
+  ].includes(pickup.status));
+
+  useEffect(() => {
+    if (!pickup || !currentPickupId) return;
+    if (['ASSIGNED', 'ON_THE_WAY', 'ARRIVED'].includes(pickup.status)) {
+      apiClient.getQr<any>(currentPickupId).then((res) => {
+        if (res.success) setQrValue(res.data?.token || res.data?.qrToken || res.data?.code || '');
+      });
+    }
+    if (pickup.status === 'SUMMARY_READY') {
+      apiClient.getSummary<any>(currentPickupId).then((res) => {
+        if (res.success) setSummary(res.data);
+      });
+    }
+  }, [pickup?.status, currentPickupId]);
+
+  const handleApproveSummary = async () => {
+    if (!summary?.summaryHash) return;
+    setIsApproving(true);
+    const res = await apiClient.approveSummary(currentPickupId, summary.summaryHash);
+    setIsApproving(false);
+    if (res.success) {
+      showToast('Summary approved');
+      await fetchPickupDetails();
+    } else {
+      showToast('Could not approve summary');
+    }
+  };
+
+  const handleResendClosingOtp = async () => {
+    const res = await apiClient.resendClosingOtp(currentPickupId);
+    showToast(res.success ? 'Closing OTP sent' : 'Could not resend closing OTP');
+  };
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] pb-10 flex flex-col">
@@ -412,7 +417,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
               </h4>
               <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 mt-0.5">
                 <Clock className="w-3 h-3 text-slate-400" />
-                {pickup.timeSlotSnapshot?.displayLabel || '9:00 AM – 11:00 AM'}
+                {pickup.timeSlotSnapshot?.displayLabel || '—'}
               </p>
             </div>
           </div>
@@ -457,7 +462,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
         {/* 7. Additional Information Card (Tools, Photos, Notes) */}
         <AdditionalInfoSection
-          initialTools={pickup.preparation?.tools || ['Ladder']}
+          initialTools={pickup.preparation?.tools || []}
           initialPhotos={
             pickup.photos
               ? pickup.photos.map((p) => (typeof p === 'string' ? p : p.fileUrl))
@@ -467,6 +472,45 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           isLocked={isLocked}
           onSavePreparation={handleSavePreparation}
         />
+
+        {qrValue && (
+          <div className="w-full bg-white rounded-2xl p-4 border border-slate-200 mb-4">
+            <div className="flex items-center gap-2 text-xs font-black text-slate-900 mb-2">
+              <QrCode className="w-4 h-4 text-emerald-800" /> Pickup verification code
+            </div>
+            <code className="block break-all text-xs bg-slate-50 p-3 rounded-xl">{qrValue}</code>
+          </div>
+        )}
+
+        {pickup.status === 'SUMMARY_READY' && summary && (
+          <div className="w-full bg-white rounded-2xl p-4 border border-emerald-200 mb-4 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-black text-slate-900">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" /> Weighing summary
+            </div>
+            {(summary.items || []).map((item: any, index: number) => (
+              <div key={item.productId || index} className="flex justify-between text-xs">
+                <span>{item.productName || 'Item'} · {(item.netWeightGrams || 0) / 1000} kg</span>
+                <strong>₹{((item.amountPaise || 0) / 100).toFixed(2)}</strong>
+              </div>
+            ))}
+            <div className="flex justify-between border-t pt-2 text-sm font-black">
+              <span>Total</span><span>₹{((summary.totals?.totalAmountPaise || 0) / 100).toFixed(2)}</span>
+            </div>
+            <button onClick={handleApproveSummary} disabled={isApproving}
+              className="w-full py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold disabled:opacity-50">
+              {isApproving ? 'Approving...' : 'Approve summary'}
+            </button>
+          </div>
+        )}
+
+        {pickup.status === 'SETTLED' && (
+          <button
+            onClick={handleResendClosingOtp}
+            className="w-full mb-4 py-3 rounded-2xl border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs font-bold"
+          >
+            Resend closing OTP
+          </button>
+        )}
 
         {/* 8. Cancel Pickup Request Action (Image 4) */}
         {!isLocked && (

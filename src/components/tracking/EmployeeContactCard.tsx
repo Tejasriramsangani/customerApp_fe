@@ -18,9 +18,9 @@ interface EmployeeContactCardProps {
 export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employee }) => {
   if (!employee) return null;
 
-  const phone = employee.employeePhone || '9876543210';
-  const name = employee.employeeName || 'Ramesh Kumar';
-  const code = employee.employeeCode || 'AKP-EMP-0247';
+  const phone = employee.employeePhone;
+  const name = employee.employeeName || 'Unassigned';
+  const code = employee.employeeCode || '—';
 
   return (
     <div className="w-full bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 mb-4 transition-all hover:shadow-md">
@@ -58,14 +58,14 @@ export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employ
         </div>
 
         {/* Right: Direct Phone Dial Button */}
-        <a
+        {phone && <a
           href={`tel:${phone}`}
           className="w-11 h-11 rounded-full bg-[#0A3D2B] hover:bg-[#06291C] active:scale-95 text-white flex items-center justify-center shadow-sm transition-all cursor-pointer group"
           title={`Call ${name}`}
           aria-label={`Call ${name}`}
         >
           <Phone className="w-5 h-5 fill-white stroke-none group-hover:scale-110 transition-transform" />
-        </a>
+        </a>}
       </div>
     </div>
   );

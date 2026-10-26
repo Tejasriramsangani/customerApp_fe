@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Edit2, KeyRound, Loader2, RefreshCw } from 'lucide-react';
-import { apiClient } from '../../lib/api-client';
+import { apiClient, getApiErrorMessage, normalizeMobile } from '../../lib/api-client';
 import { useAuth } from '../../context/AuthContext';
 
 interface OtpVerificationScreenProps {
@@ -99,7 +99,7 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
 
     try {
       const res = await apiClient.post('/auth/otp/verify', {
-        mobile: mobileNumber,
+        mobile: normalizeMobile(mobileNumber),
         code: fullCode,
         purpose: 'LOGIN',
         requestedRole: 'CUSTOMER',
@@ -108,17 +108,27 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
       if (res.success && res.data) {
         const { accessToken, refreshToken, user } = res.data;
         login(accessToken, refreshToken, {
-          _id: user._id,
-          mobileNumber: user.mobile || mobileNumber,
-          fullName: user.profile?.fullName,
-          isVerified: true,
+          id: user.id,
+          mobile: user.mobile || normalizeMobile(mobileNumber),
+          roles: user.roles,
+          status: user.status,
         });
 
-        // If user already has fullName configured, skip personalization
-        const isNewUser = !user.profile?.fullName;
+        const profileRes = await apiClient.getProfile<any>();
+        const fullName = profileRes.success ? profileRes.data?.fullName : undefined;
+        if (fullName) {
+          login(accessToken, refreshToken, {
+            id: user.id,
+            mobile: user.mobile || normalizeMobile(mobileNumber),
+            roles: user.roles,
+            status: user.status,
+            fullName,
+          });
+        }
+        const isNewUser = !fullName;
         onSuccess(isNewUser);
       } else {
-        setErrorMessage(res.error || 'Invalid OTP code. Please check and try again.');
+        setErrorMessage(getApiErrorMessage(res.error, 'Invalid OTP code. Please check and try again.'));
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Error verifying code.');
@@ -135,7 +145,7 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
 
     try {
       const res = await apiClient.post('/auth/otp/send', {
-        mobile: mobileNumber,
+        mobile: normalizeMobile(mobileNumber),
         purpose: 'LOGIN',
       });
 
@@ -144,7 +154,7 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       } else {
-        setErrorMessage(res.error || 'Failed to resend code.');
+        setErrorMessage(getApiErrorMessage(res.error, 'Failed to resend code.'));
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Network error.');

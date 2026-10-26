@@ -12,7 +12,7 @@ import {
   Sparkles,
   Tag
 } from 'lucide-react';
-import { usePickupBooking, AVAILABLE_CATEGORIES, AVAILABLE_WEIGHT_RANGES, AVAILABLE_TIME_SLOTS } from '../../context/PickupBookingContext';
+import { usePickupBooking } from '../../context/PickupBookingContext';
 import { useLocation } from '../../context/LocationContext';
 
 interface BookingSuccessStepProps {
@@ -24,22 +24,22 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
   onGoToPickups,
   onGoToHome,
 }) => {
-  const { state, resetBooking } = usePickupBooking();
+  const { state, categories, weightRanges, timeSlots, resetBooking } = usePickupBooking();
   const { location } = useLocation();
 
-  const selectedCategories = AVAILABLE_CATEGORIES.filter((c) =>
+  const selectedCategories = categories.filter((c) =>
     state.selectedCategoryIds.includes(c.id)
   );
 
-  const selectedWeight = AVAILABLE_WEIGHT_RANGES.find(
+  const selectedWeight = weightRanges.find(
     (w) => w.id === state.selectedWeightRangeId
   );
 
-  const selectedSlot = AVAILABLE_TIME_SLOTS.find(
+  const selectedSlot = timeSlots.find(
     (s) => s.id === state.selectedSlotId
   );
 
-  const pickupCode = state.confirmedPickup?.pickupCode || `AKP-${Math.floor(10000 + Math.random() * 90000)}`;
+  const pickupCode = state.confirmedPickup?.pickupCode || '—';
 
   // Format Scheduled Date
   const formattedDate = (() => {
@@ -197,7 +197,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
                 {formattedDate}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                {selectedSlot?.displayLabel || '9:00 AM – 11:00 AM'}
+                {selectedSlot?.displayLabel || '—'}
               </p>
             </div>
           </div>
@@ -243,7 +243,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
             </div>
             <div>
               <p className="text-xs font-black text-slate-900 leading-tight">
-                {selectedWeight?.label || '0 – 10 kg'}
+                {selectedWeight?.label || '—'}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
                 {selectedWeight?.description} ({selectedWeight?.bags})
@@ -258,10 +258,16 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
             </div>
             <div>
               <p className="text-xs font-black text-slate-900 leading-tight">
-                {state.paymentPreference === 'CASH' ? 'Cash (Pay on pickup)' : 'Instant UPI'}
+                {state.paymentPreference === 'CASH'
+                  ? 'Cash (Pay on pickup)'
+                  : state.paymentPreference === 'DONATE'
+                    ? 'Donate proceeds'
+                    : 'Instant UPI'}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Instant settlement after digital scale weighing
+                {state.paymentPreference === 'DONATE'
+                  ? 'Estimated value donated after weighing'
+                  : 'Instant settlement after digital scale weighing'}
               </p>
             </div>
           </div>

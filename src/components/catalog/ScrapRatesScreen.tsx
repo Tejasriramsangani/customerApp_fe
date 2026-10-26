@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, TrendingUp, ArrowRight, Tag, RefreshCw } from 'lucide-react';
+import { Search, ArrowRight, Tag } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
 
 interface ScrapRatesScreenProps {
@@ -17,38 +17,8 @@ interface ScrapRateItem {
   subLabel: string;
   pricePerKg: number;
   unit: string;
-  trend: string;
-  isUp: boolean;
   emoji: string;
 }
-
-const DEFAULT_CATALOG: ScrapRateItem[] = [
-  // Paper
-  { id: 'p1', name: 'Newspaper', category: 'paper', subLabel: 'Clean & dry daily newspapers', pricePerKg: 18, unit: 'kg', trend: '+₹1.50', isUp: true, emoji: '📰' },
-  { id: 'p2', name: 'Cardboard & Cartons', category: 'paper', subLabel: 'Corrugated boxes & packaging', pricePerKg: 14, unit: 'kg', trend: '+₹0.50', isUp: true, emoji: '📦' },
-  { id: 'p3', name: 'Office White Paper', category: 'paper', subLabel: 'Used A4 sheets & books', pricePerKg: 16, unit: 'kg', trend: '+₹1.00', isUp: true, emoji: '📄' },
-  
-  // Metal
-  { id: 'm1', name: 'Iron (Heavy MS)', category: 'metal', subLabel: 'Grills, pipes & angle frames', pricePerKg: 32, unit: 'kg', trend: '+₹2.00', isUp: true, emoji: '⚙️' },
-  { id: 'm2', name: 'Iron (Light / Tin)', category: 'metal', subLabel: 'Oil tins, roofing sheets', pricePerKg: 22, unit: 'kg', trend: '+₹0.50', isUp: true, emoji: '🥫' },
-  { id: 'm3', name: 'Aluminium', category: 'metal', subLabel: 'Utensils, frames & alloys', pricePerKg: 125, unit: 'kg', trend: '+₹5.00', isUp: true, emoji: '🍳' },
-  { id: 'm4', name: 'Copper Wires', category: 'metal', subLabel: 'Electrical cables, coils & motors', pricePerKg: 480, unit: 'kg', trend: '+₹15.00', isUp: true, emoji: '🔌' },
-  { id: 'm5', name: 'Brass (Pithal)', category: 'metal', subLabel: 'Pooja items, taps & plumbing', pricePerKg: 330, unit: 'kg', trend: '+₹10.00', isUp: true, emoji: '🔔' },
-  
-  // Plastic
-  { id: 'pl1', name: 'PET Plastic Bottles', category: 'plastic', subLabel: 'Beverage & oil bottles', pricePerKg: 28, unit: 'kg', trend: '-₹1.00', isUp: false, emoji: '🍾' },
-  { id: 'pl2', name: 'Hard Plastic (HDPE)', category: 'plastic', subLabel: 'Buckets, chairs, pipes', pricePerKg: 24, unit: 'kg', trend: '+₹1.00', isUp: true, emoji: '🪣' },
-  { id: 'pl3', name: 'Soft Plastic & Covers', category: 'plastic', subLabel: 'Clean polyethene bags', pricePerKg: 12, unit: 'kg', trend: '-₹0.50', isUp: false, emoji: '🛍️' },
-  
-  // E-Waste
-  { id: 'e1', name: 'Computer CPUs & Mobos', category: 'ewaste', subLabel: 'Desktops, server components', pricePerKg: 160, unit: 'kg', trend: '+₹5.00', isUp: true, emoji: '🖥️' },
-  { id: 'e2', name: 'Laptops & Tablets', category: 'ewaste', subLabel: 'Complete dead units', pricePerKg: 220, unit: 'piece', trend: '+₹10.00', isUp: true, emoji: '💻' },
-  { id: 'e3', name: 'Mixed Electronics', category: 'ewaste', subLabel: 'Keyboards, cables, adaptors', pricePerKg: 40, unit: 'kg', trend: '+₹0.00', isUp: true, emoji: '🔌' },
-
-  // Others
-  { id: 'o1', name: 'Inverter Batteries', category: 'others', subLabel: 'Lead acid batteries with fluid', pricePerKg: 95, unit: 'kg', trend: '+₹3.00', isUp: true, emoji: '🔋' },
-  { id: 'o2', name: 'Beer & Glass Bottles', category: 'others', subLabel: 'Unbroken whole glass bottles', pricePerKg: 2.5, unit: 'bottle', trend: '+₹0.00', isUp: true, emoji: '🍾' },
-];
 
 const CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -65,7 +35,7 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [rates, setRates] = useState<ScrapRateItem[]>(DEFAULT_CATALOG);
+  const [rates, setRates] = useState<ScrapRateItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch live catalog from backend
@@ -74,15 +44,15 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
       setIsLoading(true);
       try {
         const res = await apiClient.get('/catalog');
-        if (res.success && res.data?.categories) {
+        if (res.success && Array.isArray(res.data)) {
           const mapped: ScrapRateItem[] = [];
-          res.data.categories.forEach((cat: any) => {
+          res.data.forEach((cat: any) => {
             const catCode = cat.code?.toLowerCase() || cat.name?.toLowerCase() || 'others';
             if (Array.isArray(cat.products)) {
               cat.products.forEach((p: any) => {
-                const price = p.currentRate?.ratePerKgPaise
-                  ? p.currentRate.ratePerKgPaise / 100
-                  : 25;
+                const price = p.activeRate?.ratePerKgRupees ??
+                  (p.activeRate?.ratePerKgPaise != null ? p.activeRate.ratePerKgPaise / 100 : null);
+                if (price == null) return;
                 mapped.push({
                   id: p._id || p.id,
                   name: p.name,
@@ -90,19 +60,15 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
                   subLabel: `Verified ${cat.name} material`,
                   pricePerKg: price,
                   unit: p.unit || 'kg',
-                  trend: '+₹1.50',
-                  isUp: true,
                   emoji: catCode.includes('paper') ? '📰' : catCode.includes('plastic') ? '🍾' : catCode.includes('metal') ? '⚙️' : catCode.includes('ewaste') ? '💻' : '♻️',
                 });
               });
             }
           });
-          if (mapped.length > 0) {
-            setRates(mapped);
-          }
+          setRates(mapped);
         }
       } catch {
-        // Retain verified fallback
+        setRates([]);
       } finally {
         setIsLoading(false);
       }
@@ -199,15 +165,7 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
                 ₹{item.pricePerKg}
                 <span className="text-[10px] font-normal text-slate-500">/{item.unit}</span>
               </span>
-              <span
-                className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md inline-block mt-0.5 ${
-                  item.isUp
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'bg-rose-50 text-rose-600'
-                }`}
-              >
-                {item.isUp ? '⬆' : '⬇'} {item.trend}
-              </span>
+              <span className="text-[9px] text-slate-400">Trend —</span>
             </div>
           </motion.div>
         ))}

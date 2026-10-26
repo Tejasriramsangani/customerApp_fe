@@ -44,7 +44,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onEditName,
   onLogout,
 }) => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { location } = useLocation();
 
   // Sub-modal states
@@ -53,17 +53,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   >(null);
 
   // Addresses state
-  const [addresses, setAddresses] = useState<SavedAddress[]>([
-    {
-      id: 'addr_1',
-      line1: 'Flat 402, Sri Sai Residency, Madhura Nagar',
-      city: 'Vijayawada',
-      state: 'Andhra Pradesh',
-      pincode: '520011',
-      landmark: 'Near Railway Gate',
-      isDefault: true,
-    },
-  ]);
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [newLine1, setNewLine1] = useState('');
   const [newLandmark, setNewLandmark] = useState('');
@@ -82,10 +72,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        const res = await apiClient.get<SavedAddress[]>('/customer/addresses');
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          setAddresses(res.data);
-        }
+        const [profileRes, addressRes] = await Promise.all([
+          apiClient.getProfile<any>(),
+          apiClient.get<SavedAddress[]>('/customer/addresses'),
+        ]);
+        if (profileRes.success) updateUser({ fullName: profileRes.data?.fullName });
+        if (addressRes.success && Array.isArray(addressRes.data)) setAddresses(addressRes.data);
       } catch {}
     };
     fetchAddresses();
@@ -95,25 +87,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     if (!newLine1.trim()) return;
     const newAddr: SavedAddress = {
       line1: newLine1.trim(),
-      city: location.city || 'Vijayawada',
-      state: 'Andhra Pradesh',
-      pincode: location.pincode || '520011',
+      city: location.city,
+      state: location.state || '',
+      pincode: location.pincode,
       landmark: newLandmark.trim() || undefined,
     };
 
     try {
       const res = await apiClient.post('/customer/addresses', {
         ...newAddr,
-        coordinates: [80.648, 16.5062],
+        coordinates: [location.longitude, location.latitude],
       });
       if (res.success && res.data) {
         setAddresses((prev) => [...prev, res.data]);
-      } else {
-        setAddresses((prev) => [...prev, { ...newAddr, id: `addr_${Date.now()}` }]);
       }
-    } catch {
-      setAddresses((prev) => [...prev, { ...newAddr, id: `addr_${Date.now()}` }]);
-    }
+    } catch {}
 
     setNewLine1('');
     setNewLandmark('');
@@ -122,15 +110,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const handleDeleteAddress = async (id?: string) => {
     if (!id) return;
-    setAddresses((prev) => prev.filter((a) => (a._id || a.id) !== id));
     try {
-      await apiClient.delete(`/customer/addresses/${id}`);
+      const res = await apiClient.delete(`/customer/addresses/${id}`);
+      if (res.success) setAddresses((prev) => prev.filter((a) => (a._id || a.id) !== id));
     } catch {}
   };
 
-  const userName = user?.fullName || 'Vinay Palakonda';
-  const userInitial = userName.charAt(0).toUpperCase();
-  const userMobile = user?.mobileNumber ? `+91 ${user.mobileNumber}` : '+91 98765 43210';
+  const userName = user?.fullName || '—';
+  const userInitial = userName === '—' ? '?' : userName.charAt(0).toUpperCase();
+  const userMobile = user?.mobile ? `+91 ${user.mobile}` : '—';
 
   return (
     <div className="w-full flex flex-col space-y-4 pb-20 animate-in fade-in">
@@ -204,7 +192,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <div>
               <p className="text-xs font-bold text-slate-900">Payment Preferences</p>
               <p className="text-[11px] text-slate-400">
-                {paymentPref === 'CASH' ? 'Cash on pickup (Default)' : 'Instant UPI'}
+                Device preference: {paymentPref === 'CASH' ? 'Cash on pickup' : 'Instant UPI'}
               </p>
             </div>
           </div>
@@ -222,7 +210,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
             <div>
               <p className="text-xs font-bold text-slate-900">Notifications</p>
-              <p className="text-[11px] text-slate-400">Push updates & SMS reminders</p>
+              <p className="text-[11px] text-slate-400">Device preferences for push updates & SMS</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
@@ -274,7 +262,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <div>
               <p className="text-xs font-bold text-slate-900">Language</p>
               <p className="text-[11px] text-slate-400">
-                {language === 'en' ? 'English (Default)' : 'తెలుగు (Telugu)'}
+                Device preference: {language === 'en' ? 'English' : 'తెలుగు (Telugu)'}
               </p>
             </div>
           </div>

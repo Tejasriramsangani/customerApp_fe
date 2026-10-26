@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Info, Plus, X, Camera, Wrench, Check, Edit3 } from 'lucide-react';
+import { Info, Plus, X, Wrench, Check, Edit3 } from 'lucide-react';
 
 interface AdditionalInfoSectionProps {
   initialTools?: string[];
@@ -24,16 +24,11 @@ const AVAILABLE_TOOLS = [
 
 export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
   initialTools = ['Ladder'],
-  initialPhotos = [
-    'https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=150&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=150&auto=format&fit=crop&q=80',
-  ],
-  initialRemarks = 'Scrap kept near main gate. Please call 10 mins before arrival.',
+  initialRemarks = '',
   isLocked = false,
   onSavePreparation,
 }) => {
   const [tools, setTools] = useState<string[]>(initialTools);
-  const [photos, setPhotos] = useState<string[]>(initialPhotos);
   const [remarks, setRemarks] = useState(initialRemarks);
   const [isEditingRemarks, setIsEditingRemarks] = useState(false);
   const [tempRemarks, setTempRemarks] = useState(initialRemarks);
@@ -53,20 +48,6 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
     setTools(updated);
     setShowToolPicker(false);
     await onSavePreparation({ tools: updated });
-  };
-
-  const handleAddPhoto = async () => {
-    if (isLocked || photos.length >= 3) return;
-    // Generate an illustrative scrap photo URL for testing/demo
-    const demoPhotos = [
-      'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=150&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=150&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=150&auto=format&fit=crop&q=80',
-    ];
-    const newPhoto = demoPhotos[photos.length % demoPhotos.length];
-    const updated = [...photos, newPhoto];
-    setPhotos(updated);
-    await onSavePreparation({ photoUrls: [newPhoto] });
   };
 
   const handleSaveRemarks = async () => {
@@ -155,56 +136,7 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
         )}
       </div>
 
-      {/* 2. Scrap Photos (Max 3) */}
-      <div>
-        <label className="text-[11px] font-bold text-slate-600 flex items-center justify-between mb-2">
-          <span className="flex items-center gap-1.5">
-            <Camera className="w-3.5 h-3.5 text-slate-400" />
-            Photos ({photos.length}/3)
-          </span>
-          <span className="text-[10px] text-slate-400 font-normal">Optional</span>
-        </label>
-
-        <div className="flex items-center gap-2.5">
-          {photos.map((url, idx) => (
-            <div
-              key={idx}
-              className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 group shadow-2xs"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={url}
-                alt={`Scrap photo ${idx + 1}`}
-                className="w-full h-full object-cover"
-              />
-              {!isLocked && (
-                <button
-                  onClick={() => {
-                    const updated = photos.filter((_, i) => i !== idx);
-                    setPhotos(updated);
-                  }}
-                  className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              )}
-            </div>
-          ))}
-
-          {!isLocked && photos.length < 3 && (
-            <button
-              onClick={handleAddPhoto}
-              className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 hover:border-[#0A3D2B] bg-slate-50/50 hover:bg-emerald-50/30 flex flex-col items-center justify-center text-slate-400 hover:text-[#0A3D2B] transition-colors cursor-pointer group"
-              title="Add Scrap Photo"
-            >
-              <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <span className="text-[9px] font-bold mt-0.5">Add</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 3. Doorstep Instructions / Notes */}
+      {/* Doorstep Instructions / Notes */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="text-[11px] font-bold text-slate-600">

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Phone, Truck, ShieldCheck, Loader2 } from 'lucide-react';
-import { apiClient } from '../../lib/api-client';
+import { apiClient, getApiErrorMessage, normalizeMobile } from '../../lib/api-client';
 import { BrandLogo } from '../common/BrandLogo';
 
 interface LoginScreenProps {
@@ -30,14 +30,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) =
 
     try {
       const res = await apiClient.post('/auth/otp/send', {
-        mobile: mobileNumber.trim(),
+        mobile: normalizeMobile(mobileNumber),
         purpose: 'LOGIN',
       });
 
       if (res.success) {
-        onOtpSent(mobileNumber.trim());
+        onOtpSent(normalizeMobile(mobileNumber));
       } else {
-        setErrorMessage(res.error || 'Failed to send verification code. Please try again.');
+        setErrorMessage(getApiErrorMessage(res.error, 'Failed to send verification code. Please try again.'));
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Network error while sending OTP.');
@@ -147,10 +147,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) =
             </motion.p>
           )}
 
-          {/* Development Quick Hint */}
-          <p className="text-[10px] text-slate-400 text-left px-1">
-            💡 For local testing, any 10-digit number (e.g. 9876543210) works. OTP is logged to your backend console.
-          </p>
+          {process.env.NODE_ENV === 'development' && (
+            <p className="text-[10px] text-slate-400 text-left px-1">
+              Local OTP delivery details are available in the backend logs.
+            </p>
+          )}
         </form>
       </div>
 

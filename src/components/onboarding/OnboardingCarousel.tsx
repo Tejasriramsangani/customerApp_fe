@@ -64,9 +64,9 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({ onComple
           <div className="relative z-10 w-60 bg-white/95 text-slate-800 rounded-3xl p-4 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <span className="text-xs font-bold text-[#0A3D2B] flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> Today's Rates
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> Transparent Rates
               </span>
-              <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-semibold">Live</span>
+              <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-semibold">Itemized</span>
             </div>
             <div className="space-y-2 mt-2.5">
               <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
@@ -77,7 +77,7 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({ onComple
                     <p className="text-[10px] text-slate-500">Clean & dry</p>
                   </div>
                 </div>
-                <span className="text-xs font-black text-[#0A3D2B]">₹18 / kg</span>
+                <span className="text-xs font-black text-[#0A3D2B]">Live rate</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({ onComple
                     <p className="text-[10px] text-slate-500">Heavy scrap</p>
                   </div>
                 </div>
-                <span className="text-xs font-black text-[#0A3D2B]">₹32 / kg</span>
+                <span className="text-xs font-black text-[#0A3D2B]">Live rate</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="flex items-center gap-2">

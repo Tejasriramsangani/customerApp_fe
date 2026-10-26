@@ -4,10 +4,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../lib/api-client';
 
 export interface CustomerUser {
-  _id: string;
-  mobileNumber: string;
+  id: string;
+  mobile: string;
   fullName?: string;
-  isVerified: boolean;
+  roles?: string[];
+  status?: string;
   avatarUrl?: string;
   defaultAddressId?: string;
 }
@@ -30,19 +31,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Rehydrate from localStorage on mount
-    try {
+    let mounted = true;
+    const restoreSession = async () => {
       const storedToken = localStorage.getItem('aslikaata_customer_access_token');
       const storedUser = localStorage.getItem('aslikaata_customer_profile');
-      if (storedToken && storedUser) {
-        setAccessToken(storedToken);
-        setUser(JSON.parse(storedUser));
+      if (!storedToken) {
+        if (mounted) setIsLoading(false);
+        return;
       }
-    } catch {
-      // Ignore storage read errors
-    } finally {
-      setIsLoading(false);
-    }
+      const [meRes, profileRes] = await Promise.all([
+        apiClient.getMe<any>(),
+        apiClient.getProfile<any>(),
+      ]);
+      if (!meRes.success) {
+        apiClient.clearTokens();
+      } else if (mounted) {
+        const cached = storedUser ? JSON.parse(storedUser) : {};
+        const hydrated: CustomerUser = {
+          ...cached,
+          id: meRes.data.id,
+          mobile: meRes.data.mobile,
+          roles: meRes.data.roles,
+          status: meRes.data.status,
+          fullName: profileRes.success ? profileRes.data?.fullName : cached.fullName,
+        };
+        localStorage.setItem('aslikaata_customer_profile', JSON.stringify(hydrated));
+        setAccessToken(storedToken);
+        setUser(hydrated);
+      }
+      if (mounted) setIsLoading(false);
+    };
+    restoreSession().catch(() => {
+      if (mounted) setIsLoading(false);
+    });
+    return () => { mounted = false; };
   }, []);
 
   const login = (newAccessToken: string, newRefreshToken: string, newUser: CustomerUser) => {

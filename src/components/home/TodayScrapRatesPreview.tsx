@@ -39,14 +39,15 @@ export const TodayScrapRatesPreview: React.FC<TodayScrapRatesPreviewProps> = ({
       .get('/catalog')
       .then((res) => {
         if (!isMounted) return;
-        if (res.success && res.data?.categories) {
+        if (res.success && Array.isArray(res.data)) {
           const items: DynamicRateItem[] = [];
-          res.data.categories.forEach((cat: any) => {
+          res.data.forEach((cat: any) => {
             if (Array.isArray(cat.products)) {
               cat.products.forEach((p: any) => {
-                const price = p.currentRate?.ratePerKgPaise
-                  ? `₹${(p.currentRate.ratePerKgPaise / 100).toFixed(0)}`
-                  : '₹30';
+                const rupees = p.activeRate?.ratePerKgRupees ??
+                  (p.activeRate?.ratePerKgPaise != null ? p.activeRate.ratePerKgPaise / 100 : null);
+                if (rupees == null) return;
+                const price = `₹${Number(rupees).toFixed(2)}`;
                 items.push({
                   id: p._id || p.id,
                   name: p.name,

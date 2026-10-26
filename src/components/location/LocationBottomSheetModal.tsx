@@ -11,53 +11,70 @@ interface LocationBottomSheetModalProps {
   onSelectLocation?: (location: LocationData) => void;
 }
 
+// Approximate locality centroids so address create works even if GPS is denied.
 const POPULAR_LOCALITIES: LocationData[] = [
   {
     areaName: "Satyanarayanapuram",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520011",
+    latitude: 16.5205,
+    longitude: 80.6305,
     formattedAddress: "Satyanarayanapuram, Vijayawada, AP - 520011",
   },
   {
     areaName: "Benz Circle",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520010",
+    latitude: 16.5033,
+    longitude: 80.6469,
     formattedAddress: "Benz Circle, MG Road, Vijayawada, AP - 520010",
   },
   {
     areaName: "Moghalrajpuram",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520010",
+    latitude: 16.5108,
+    longitude: 80.6482,
     formattedAddress: "Moghalrajpuram, Siddhartha College Area, Vijayawada, AP - 520010",
   },
   {
     areaName: "Governorpet",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520002",
+    latitude: 16.5132,
+    longitude: 80.6215,
     formattedAddress: "Governorpet, Commercial District, Vijayawada, AP - 520002",
   },
   {
     areaName: "Bhavanipuram",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520012",
+    latitude: 16.5402,
+    longitude: 80.5985,
     formattedAddress: "Bhavanipuram, National Highway, Vijayawada, AP - 520012",
   },
   {
     areaName: "Patamata",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520014",
+    latitude: 16.4955,
+    longitude: 80.6698,
     formattedAddress: "Patamata, High School Road, Vijayawada, AP - 520014",
   },
   {
     areaName: "Auto Nagar",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520007",
+    latitude: 16.4821,
+    longitude: 80.6884,
     formattedAddress: "Auto Nagar Industrial Hub, Vijayawada, AP - 520007",
   },
   {
     areaName: "One Town",
-    city: "Vijayawada",
+    city: "Vijayawada", state: "Andhra Pradesh",
     pincode: "520001",
+    latitude: 16.5158,
+    longitude: 80.6152,
     formattedAddress: "One Town, Temple Road, Vijayawada, AP - 520001",
   },
 ];
@@ -70,6 +87,7 @@ export const LocationBottomSheetModal: React.FC<LocationBottomSheetModalProps> =
   const { location, setLocation, requestCurrentLocation } = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLocating, setIsLocating] = useState(false);
+  const [gpsHint, setGpsHint] = useState("");
 
   const filteredLocalities = useMemo(() => {
     if (!searchQuery.trim()) return POPULAR_LOCALITIES;
@@ -82,21 +100,49 @@ export const LocationBottomSheetModal: React.FC<LocationBottomSheetModalProps> =
     );
   }, [searchQuery]);
 
-  const handleSelect = (loc: LocationData) => {
-    setLocation(loc);
-    if (onSelectLocation) onSelectLocation(loc);
+  const handleSelect = async (loc: LocationData) => {
+    if (!/^\d{6}$/.test(loc.pincode || '')) {
+      setGpsHint('Please pick a locality with a valid 6-digit pincode.');
+      return;
+    }
+    // Prefer live GPS when available; otherwise use locality centroid.
+    let latitude = loc.latitude;
+    let longitude = loc.longitude;
+    if (location.latitude != null && location.longitude != null) {
+      latitude = location.latitude;
+      longitude = location.longitude;
+    } else {
+      try {
+        const detected = await requestCurrentLocation();
+        if (detected?.latitude != null && detected?.longitude != null) {
+          latitude = detected.latitude;
+          longitude = detected.longitude;
+        }
+      } catch {
+        /* keep centroid */
+      }
+    }
+    const selected: LocationData = {
+      ...loc,
+      latitude,
+      longitude,
+    };
+    setGpsHint('');
+    setLocation(selected);
+    if (onSelectLocation) onSelectLocation(selected);
     onClose();
   };
 
   const handleUseCurrentLocation = async () => {
     setIsLocating(true);
-    const success = await requestCurrentLocation();
+    setGpsHint('');
+    const detected = await requestCurrentLocation();
     setIsLocating(false);
-    if (success) {
-      if (onSelectLocation) {
-        onSelectLocation(location);
-      }
-      onClose();
+    if (detected) {
+      // GPS alone has no pincode — keep sheet open so user picks a covered locality.
+      setGpsHint('GPS captured. Now select your locality below to complete the address.');
+    } else {
+      setGpsHint('Could not get GPS. Select a locality below — approximate coordinates will be used.');
     }
   };
 
@@ -173,9 +219,17 @@ export const LocationBottomSheetModal: React.FC<LocationBottomSheetModalProps> =
               <span className="text-xs font-bold text-[#0A3D2B] block">
                 {isLocating ? "Detecting GPS location..." : "Use current location"}
               </span>
-              <span className="text-[10px] text-emerald-700">Find the nearest scrap pickup service</span>
+              <span className="text-[10px] text-emerald-700">
+                Captures GPS — then pick a locality for pincode
+              </span>
             </div>
           </button>
+
+          {gpsHint && (
+            <p className="mt-2 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+              {gpsHint}
+            </p>
+          )}
 
           {/* Scrollable Location List */}
           <div className="flex-1 overflow-y-auto mt-4 space-y-4 no-scrollbar pr-1">

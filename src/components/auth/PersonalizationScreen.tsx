@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Edit3, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
-import { apiClient } from '../../lib/api-client';
+import { apiClient, getApiErrorMessage } from '../../lib/api-client';
 import { useAuth } from '../../context/AuthContext';
 
 interface PersonalizationScreenProps {
@@ -41,14 +41,10 @@ export const PersonalizationScreen: React.FC<PersonalizationScreenProps> = ({
         updateUser({ fullName: fullName.trim() });
         onComplete();
       } else {
-        // Fallback: update local profile and proceed even if backend profile route responds with different wrapper
-        updateUser({ fullName: fullName.trim() });
-        onComplete();
+        setErrorMessage(getApiErrorMessage(res.error, 'Could not save your profile.'));
       }
-    } catch {
-      // Local graceful fallback
-      updateUser({ fullName: fullName.trim() });
-      onComplete();
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, 'Could not save your profile.'));
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +112,7 @@ export const PersonalizationScreen: React.FC<PersonalizationScreenProps> = ({
                   setFullName(e.target.value);
                   if (errorMessage) setErrorMessage(null);
                 }}
-                placeholder="e.g. Vinay Palakonda"
+                placeholder="Enter your full name"
                 className="w-full text-sm font-bold text-slate-900 placeholder-slate-400 focus:outline-none bg-transparent"
               />
             </div>

@@ -39,6 +39,7 @@ export interface InvoiceDetails {
   settlementMethod: 'CASH' | 'UPI' | 'DONATE';
   executiveName: string;
   executiveCode: string;
+  pdfUrl?: string | null;
 }
 
 interface InvoiceModalProps {
@@ -51,7 +52,7 @@ interface InvoiceModalProps {
 export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   isOpen,
   pickupId,
-  pickupCode = 'AKP-10198',
+  pickupCode = '—',
   onClose,
 }) => {
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
@@ -73,12 +74,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         if (res.success && res.data) {
           const inv = res.data;
           setInvoice({
-            invoiceNumber: inv.invoiceNumber || `INV-${pickupCode.replace(/\D/g, '') || '10198'}`,
-            pickupCode: inv.pickupCode || pickupCode,
-            date: inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('en-IN') : '28 Sep 2026',
-            customerName: inv.customerName || 'Vinay Palakonda',
-            customerPhone: inv.customerPhone || '+91 98765 43210',
-            address: inv.address || 'Madhura Nagar, Vijayawada',
+            invoiceNumber: inv.invoiceNumber || '—',
+            pickupCode,
+            date: inv.issuedAt ? new Date(inv.issuedAt).toLocaleDateString('en-IN') : '—',
+            customerName: inv.customerName || '—',
+            customerPhone: inv.customerPhone || '—',
+            address: inv.address || '—',
             items: inv.lineItems?.map((li: any) => ({
               productName: li.productName,
               grossWeightKg: li.grossWeightGrams / 1000,
@@ -87,12 +88,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               ratePerKg: (li.ratePerKgSnapshot || 0) / 100,
               amount: (li.amount || 0) / 100,
             })) || [],
-            totalGrossKg: (inv.grossWeightGrams || 34500) / 1000,
-            totalNetKg: (inv.netWeightGrams || 32800) / 1000,
-            totalAmountPaise: inv.totalAmountPaise || 84200,
-            settlementMethod: inv.settlementMethod || 'CASH',
-            executiveName: inv.executiveName || 'Ramesh Kumar',
-            executiveCode: inv.executiveCode || 'AKP-EMP-0247',
+            totalGrossKg: (inv.grossWeightGrams || 0) / 1000,
+            totalNetKg: (inv.netWeightGrams || 0) / 1000,
+            totalAmountPaise: inv.totalAmount || 0,
+            settlementMethod: inv.settlementDetails?.type || 'CASH',
+            executiveName: inv.executiveName || '—',
+            executiveCode: inv.executiveCode || '—',
+            pdfUrl: inv.pdfUrl,
           });
         } else {
           setInvoice(null);
@@ -112,7 +114,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   const totalRupees = invoice ? (invoice.totalAmountPaise / 100).toFixed(2) : '0.00';
 
   const handleDownload = () => {
-    showToast('Digital Receipt downloaded');
+    if (invoice?.pdfUrl) {
+      window.open(invoice.pdfUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      window.print();
+    }
   };
 
   const handleShare = () => {
@@ -148,7 +154,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 Tax Invoice & Scrap Receipt
               </h3>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                {invoice?.invoiceNumber || 'INV-10198'}
+                {invoice?.invoiceNumber || '—'}
               </p>
             </div>
           </div>

@@ -14,16 +14,16 @@ interface LocationPermissionScreenProps {
 export const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({
   onLocationConfirmed,
 }) => {
-  const { location, requestCurrentLocation } = useLocation();
+  const { requestCurrentLocation } = useLocation();
   const [isManualSheetOpen, setIsManualSheetOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
   const handleAllowLocation = async () => {
     setIsLocating(true);
-    const success = await requestCurrentLocation();
+    const detected = await requestCurrentLocation();
     setIsLocating(false);
-    if (success) {
-      onLocationConfirmed(location);
+    if (detected) {
+      onLocationConfirmed(detected);
     } else {
       // If permission is denied or unavailable, fall back to opening manual selection
       setIsManualSheetOpen(true);

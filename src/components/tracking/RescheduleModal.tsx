@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Calendar, Clock, X, Check } from 'lucide-react';
-import { AVAILABLE_TIME_SLOTS, TimeSlotItem } from '../../context/PickupBookingContext';
+import { usePickupBooking } from '../../context/PickupBookingContext';
 
 interface RescheduleModalProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
   onClose,
   onConfirmReschedule,
 }) => {
+  const { timeSlots } = usePickupBooking();
   // Generate next 7 days starting from tomorrow
   const availableDates = React.useMemo(() => {
     const list = [];
@@ -35,7 +36,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
   }, []);
 
   const [selectedDate, setSelectedDate] = useState(availableDates[0]?.iso || currentDate);
-  const [selectedSlotId, setSelectedSlotId] = useState(currentSlotId || AVAILABLE_TIME_SLOTS[0].id);
+  const [selectedSlotId, setSelectedSlotId] = useState(currentSlotId || timeSlots[0]?.id || '');
   const [reason, setReason] = useState('Change of schedule');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -109,7 +110,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
               Select Time Slot
             </label>
             <div className="grid grid-cols-1 gap-1.5">
-              {AVAILABLE_TIME_SLOTS.map((slot) => {
+              {timeSlots.map((slot) => {
                 const isSelected = selectedSlotId === slot.id;
                 return (
                   <button
@@ -167,7 +168,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
           </button>
           <button
             onClick={handleConfirm}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !selectedSlotId}
             className="flex-1 py-2.5 rounded-xl bg-[#0A3D2B] hover:bg-[#06291C] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
           >
             {isSubmitting ? 'Saving...' : 'Confirm Reschedule'}

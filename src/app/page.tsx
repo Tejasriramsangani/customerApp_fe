@@ -60,7 +60,7 @@ function CustomerApp() {
   };
 
   const { location, isSheetOpen, closeSheet, setLocation } = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading: isAuthLoading, isAuthenticated } = useAuth();
 
   const loadCustomerPickups = React.useCallback(async () => {
     setIsLoadingPickups(true);
@@ -101,6 +101,12 @@ function CustomerApp() {
       setCurrentStep('onboarding');
     }
   }, []);
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated && !user?.fullName && currentStep === 'app') {
+      setCurrentStep('personalize');
+    }
+  }, [isAuthLoading, isAuthenticated, user?.fullName, currentStep]);
 
   const handleOnboardingComplete = () => {
     try {
@@ -250,7 +256,7 @@ function CustomerApp() {
                   </div>
                   <div>
                     <p className="text-xs font-black text-slate-800">Hello, {user.fullName} 👋</p>
-                    <p className="text-[10px] text-slate-400">+91 {user.mobileNumber}</p>
+                    <p className="text-[10px] text-slate-400">+91 {user.mobile}</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -281,7 +287,7 @@ function CustomerApp() {
             {/* 5. Together For A Greener Tomorrow (Screen 7) */}
             <GreenerTomorrowSection />
 
-            {/* Quick Testing Links */}
+            {process.env.NODE_ENV === 'development' && (
             <div className="pt-2 border-t border-slate-200/60 text-center">
               <div className="flex items-center justify-center gap-3 text-[11px] text-slate-400">
                 <button
@@ -309,6 +315,7 @@ function CustomerApp() {
                 </button>
               </div>
             </div>
+            )}
           </div>
         )}
 

@@ -45,16 +45,17 @@ export interface PickupItemData {
 interface PickupCardProps {
   pickup: PickupItemData;
   onClick: () => void;
+  onInvoice?: () => void;
 }
 
-export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick }) => {
+export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick, onInvoice }) => {
   // Parse date into day, monthYear, and weekday
   const { day, monthYear, weekday } = React.useMemo(() => {
     try {
       const d = new Date(pickup.scheduledDate);
       if (isNaN(d.getTime())) {
         // Fallback for custom formatted strings
-        return { day: '04', monthYear: 'Oct 2026', weekday: 'Sat' };
+        return { day: '—', monthYear: '—', weekday: '—' };
       }
       return {
         day: d.getDate().toString().padStart(2, '0'),
@@ -62,7 +63,7 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick }) => {
         weekday: d.toLocaleDateString('en-IN', { weekday: 'short' }),
       };
     } catch {
-      return { day: '04', monthYear: 'Oct 2026', weekday: 'Sat' };
+      return { day: '—', monthYear: '—', weekday: '—' };
     }
   }, [pickup.scheduledDate]);
 
@@ -124,10 +125,10 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick }) => {
   const locationText =
     pickup.locationLabel ||
     (pickup.addressSnapshot
-      ? `${pickup.addressSnapshot.line1 || 'Madhura Nagar'}, ${pickup.addressSnapshot.city || 'Vijayawada'}`
-      : 'Madhura Nagar, Vijayawada');
+      ? [pickup.addressSnapshot.line1, pickup.addressSnapshot.city].filter(Boolean).join(', ') || '—'
+      : '—');
 
-  const slotText = pickup.timeSlotSnapshot?.displayLabel || '9:00 AM – 11:00 AM';
+  const slotText = pickup.timeSlotSnapshot?.displayLabel || '—';
 
   return (
     <div
@@ -161,6 +162,14 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick }) => {
             <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="truncate">{slotText}</span>
           </div>
+          {isCompleted && onInvoice && (
+            <button
+              onClick={(event) => { event.stopPropagation(); onInvoice(); }}
+              className="text-[11px] font-bold text-emerald-800 underline"
+            >
+              View invoice
+            </button>
+          )}
 
           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
             <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />

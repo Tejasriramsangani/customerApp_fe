@@ -9,9 +9,21 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v
 export interface ApiResponse<T = any> {
   success: boolean;
   data: T;
-  error?: string | null;
+  error?: { message?: string | string[] } | string | null;
   timestamp: string;
 }
+
+export const getApiErrorMessage = (error: unknown, fallback = 'Request failed'): string => {
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (Array.isArray(message)) return message.map(String).join(', ');
+    if (message != null) return String(message);
+  }
+  return fallback;
+};
+
+export const normalizeMobile = (mobile: string) => mobile.replace(/\D/g, '').slice(-10);
 
 type ServerStatusListener = (isDown: boolean, details?: string) => void;
 
@@ -41,15 +53,15 @@ class ApiClient {
         this.notifyStatus(false);
         return true;
       }
+    } catch {}
+    try {
+      const catalog = await fetch(`${BASE_URL}/catalog`, { method: 'GET', cache: 'no-store' });
+      if (catalog.ok) {
+        this.notifyStatus(false);
+        return true;
+      }
     } catch {
-      // Fallback check against rates catalog
-      try {
-        const fallback = await fetch(`${BASE_URL}/catalog/rates`, { method: 'GET', cache: 'no-store' });
-        if (fallback.ok) {
-          this.notifyStatus(false);
-          return true;
-        }
-      } catch {}
+      // Both probes failed.
     }
     this.notifyStatus(true, 'Server unreachable or undergoing maintenance');
     return false;
@@ -141,10 +153,22 @@ class ApiClient {
           headers.set('Authorization', `Bearer ${newToken}`);
           return this.request<T>(endpoint, { ...options, headers }, true);
         }
+      } else if (response.status === 401) {
+        this.clearTokens();
       }
 
-      const data = await response.json();
-      return data as ApiResponse<T>;
+      try {
+        const data = (await response.json()) as ApiResponse<T>;
+        if (!response.ok && data.success) data.success = false;
+        return data;
+      } catch {
+        return {
+          success: false,
+          data: null as T,
+          error: { message: `HTTP ${response.status}` },
+          timestamp: new Date().toISOString(),
+        };
+      }
     } catch (err: any) {
       const errorMsg = err.message || 'Network request failed';
       // Flag server downtime on connection refusals or network failures
@@ -160,7 +184,7 @@ class ApiClient {
       return {
         success: false,
         data: null as any,
-        error: errorMsg,
+        error: { message: errorMsg },
         timestamp: new Date().toISOString(),
       };
     }
@@ -197,6 +221,21 @@ class ApiClient {
   public delete<T = any>(endpoint: string, headers?: HeadersInit) {
     return this.request<T>(endpoint, { method: 'DELETE', headers });
   }
+
+  public getMe<T = any>() { return this.get<T>('/auth/me'); }
+  public getProfile<T = any>() { return this.get<T>('/customer/profile'); }
+  public getAvailability<T = any>(addressId: string, weightRangeId: string) {
+    return this.get<T>(`/availability?addressId=${encodeURIComponent(addressId)}&weightRangeId=${encodeURIComponent(weightRangeId)}`);
+  }
+  public getQr<T = any>(id: string) { return this.get<T>(`/customer/pickups/${id}/qr`); }
+  public getSummary<T = any>(id: string) { return this.get<T>(`/customer/pickups/${id}/summary`); }
+  public approveSummary<T = any>(id: string, summaryHash: string) {
+    return this.post<T>(`/customer/pickups/${id}/approve`, { summaryHash });
+  }
+  public resendClosingOtp<T = any>(id: string) {
+    return this.post<T>(`/customer/pickups/${id}/resend-closing-otp`);
+  }
+  public getDonationRecipients<T = any>() { return this.get<T>('/catalog/donation-recipients'); }
 }
 
 export const apiClient = new ApiClient();

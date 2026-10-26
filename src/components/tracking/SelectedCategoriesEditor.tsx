@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { LayoutGrid, Plus, X, Check } from 'lucide-react';
-import { AVAILABLE_CATEGORIES, ScrapCategoryItem } from '../../context/PickupBookingContext';
+import { usePickupBooking } from '../../context/PickupBookingContext';
 
 interface SelectedCategoriesEditorProps {
   categoryIds: string[];
@@ -18,9 +18,10 @@ export const SelectedCategoriesEditor: React.FC<SelectedCategoriesEditorProps> =
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedToAdd, setSelectedToAdd] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const { categories } = usePickupBooking();
 
   // Map category IDs to full objects safely
-  const selectedCategories = AVAILABLE_CATEGORIES.filter((c) =>
+  const selectedCategories = categories.filter((c) =>
     (categoryIds || []).some((cid) =>
       typeof cid === 'string' &&
       (cid === c.id ||
@@ -31,13 +32,10 @@ export const SelectedCategoriesEditor: React.FC<SelectedCategoriesEditorProps> =
     )
   );
 
-  const activeDisplayCategories =
-    selectedCategories.length > 0
-      ? selectedCategories
-      : [AVAILABLE_CATEGORIES[0], AVAILABLE_CATEGORIES[2]];
+  const activeDisplayCategories = selectedCategories;
 
   // Categories available to add (not yet selected)
-  const unselectedCategories = AVAILABLE_CATEGORIES.filter(
+  const unselectedCategories = categories.filter(
     (c) => !activeDisplayCategories.some((sc) => sc.id === c.id)
   );
 

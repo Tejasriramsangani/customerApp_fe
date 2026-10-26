@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiClient } from '../lib/api-client';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { apiClient, getApiErrorMessage } from '../lib/api-client';
 
 export interface ScrapCategoryItem {
   id: string;
@@ -16,6 +16,9 @@ export interface WeightRangeItem {
   label: string;
   description: string;
   bags: string;
+  minKg: number;
+  maxKg: number;
+  isBulk: boolean;
 }
 
 export interface TimeSlotItem {
@@ -42,44 +45,22 @@ interface PickupBookingContextType {
   state: BookingState;
   categories: ScrapCategoryItem[];
   weightRanges: WeightRangeItem[];
+  bulkLimitKg: number;
   timeSlots: TimeSlotItem[];
+  isCatalogLoading: boolean;
+  catalogError: string;
+  refreshCatalog: () => Promise<void>;
   setStep: (step: 1 | 2 | 3 | 4 | 5) => void;
   toggleCategory: (categoryId: string) => void;
   setWeightRange: (rangeId: string) => void;
   setDate: (date: string) => void;
   setSlot: (slotId: string) => void;
+  setAddressId: (addressId: string) => void;
   setPaymentPreference: (pref: 'CASH' | 'UPI' | 'DONATE') => void;
   setRemarks: (remarks: string) => void;
   setConfirmedPickup: (pickup: any) => void;
   resetBooking: () => void;
 }
-
-// Fallback baseline items
-export const AVAILABLE_CATEGORIES: ScrapCategoryItem[] = [
-  { id: 'cat_paper', name: 'Paper', code: 'PAPER', emoji: '📄', description: 'Newspapers, cartons, books' },
-  { id: 'cat_plastic', name: 'Plastic', code: 'PLASTIC', emoji: '🍾', description: 'Bottles, containers, cans' },
-  { id: 'cat_metal', name: 'Metal', code: 'METAL', emoji: '⚙️', description: 'Iron, aluminium, copper' },
-  { id: 'cat_ewaste', name: 'E-Waste', code: 'EWASTE', emoji: '💻', description: 'Appliances, wires, PCs' },
-  { id: 'cat_rubber', name: 'Rubber / Tyres', code: 'RUBBER', emoji: '🛞', description: 'Tyres, tubes, mats' },
-  { id: 'cat_others', name: 'Others', code: 'OTHERS', emoji: '📦', description: 'Glass, batteries, mixed' },
-];
-
-export const AVAILABLE_WEIGHT_RANGES: WeightRangeItem[] = [
-  { id: 'wr_0_10', label: '0 – 10 kg', description: 'Small amount', bags: '1–2 bags' },
-  { id: 'wr_10_20', label: '10 – 20 kg', description: 'A few bags', bags: '2–3 bags' },
-  { id: 'wr_20_30', label: '20 – 30 kg', description: 'Medium amount', bags: '4–5 bags' },
-  { id: 'wr_30_50', label: '30 – 50 kg', description: 'Large amount', bags: 'Multiple boxes' },
-  { id: 'wr_50_plus', label: '50+ kg', description: 'Bulk amount', bags: 'Truck load' },
-];
-
-export const AVAILABLE_TIME_SLOTS: TimeSlotItem[] = [
-  { id: 'slot_m1', period: 'morning', displayLabel: '9:00 AM – 11:00 AM', startTime: '09:00', endTime: '11:00' },
-  { id: 'slot_m2', period: 'morning', displayLabel: '11:00 AM – 1:00 PM', startTime: '11:00', endTime: '13:00' },
-  { id: 'slot_a1', period: 'afternoon', displayLabel: '1:00 PM – 3:00 PM', startTime: '13:00', endTime: '15:00' },
-  { id: 'slot_a2', period: 'afternoon', displayLabel: '3:00 PM – 5:00 PM', startTime: '15:00', endTime: '17:00' },
-  { id: 'slot_e1', period: 'evening', displayLabel: '5:00 PM – 7:00 PM', startTime: '17:00', endTime: '19:00' },
-  { id: 'slot_e2', period: 'evening', displayLabel: '7:00 PM – 8:00 PM', startTime: '19:00', endTime: '20:00' },
-];
 
 const getTomorrowDate = () => {
   const d = new Date();
@@ -87,12 +68,30 @@ const getTomorrowDate = () => {
   return d.toISOString().split('T')[0];
 };
 
+const bagHintForRange = (minGrams: number, maxGrams: number): string => {
+  const maxKg = maxGrams / 1000;
+  if (maxKg <= 10) return '1–2 bags';
+  if (maxKg <= 20) return '2–3 bags';
+  if (maxKg <= 30) return '4–5 bags';
+  if (maxKg <= 50) return 'Multiple boxes';
+  return 'Truck / bulk load';
+};
+
+const descriptionForRange = (minGrams: number, maxGrams: number): string => {
+  const maxKg = maxGrams / 1000;
+  if (maxKg <= 10) return 'Small amount';
+  if (maxKg <= 20) return 'A few bags';
+  if (maxKg <= 30) return 'Medium amount';
+  if (maxKg <= 50) return 'Large amount';
+  return 'Bulk amount';
+};
+
 const initialState: BookingState = {
   step: 1,
-  selectedCategoryIds: ['cat_paper', 'cat_metal'],
-  selectedWeightRangeId: 'wr_10_20',
+  selectedCategoryIds: [],
+  selectedWeightRangeId: '',
   selectedDate: getTomorrowDate(),
-  selectedSlotId: 'slot_m2',
+  selectedSlotId: '',
   paymentPreference: 'CASH',
   remarks: '',
   confirmedPickup: null,
@@ -102,59 +101,141 @@ const PickupBookingContext = createContext<PickupBookingContextType | undefined>
 
 export function PickupBookingProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<BookingState>(initialState);
-  const [categories, setCategories] = useState<ScrapCategoryItem[]>(AVAILABLE_CATEGORIES);
-  const [weightRanges, setWeightRanges] = useState<WeightRangeItem[]>(AVAILABLE_WEIGHT_RANGES);
-  const [timeSlots, setTimeSlots] = useState<TimeSlotItem[]>(AVAILABLE_TIME_SLOTS);
+  const [categories, setCategories] = useState<ScrapCategoryItem[]>([]);
+  const [weightRanges, setWeightRanges] = useState<WeightRangeItem[]>([]);
+  const [bulkLimitKg, setBulkLimitKg] = useState(50);
+  const [timeSlots, setTimeSlots] = useState<TimeSlotItem[]>([]);
+  const [isCatalogLoading, setIsCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
 
-  // Fetch real catalog categories, weight ranges, and slots dynamically from backend
-  useEffect(() => {
-    let isMounted = true;
-    Promise.all([
-      apiClient.get('/catalog/categories'),
-      apiClient.get('/catalog/weight-ranges'),
-      apiClient.get('/catalog/slots'),
-    ])
-      .then(([catRes, weightRes, slotRes]) => {
-        if (!isMounted) return;
+  const refreshCatalog = useCallback(async () => {
+    setIsCatalogLoading(true);
+    setCatalogError('');
+    try {
+      const [catRes, weightRes, slotRes] = await Promise.all([
+        apiClient.get('/catalog/categories'),
+        apiClient.get('/catalog/weight-ranges'),
+        apiClient.get('/catalog/slots'),
+      ]);
 
-        if (catRes.success && Array.isArray(catRes.data) && catRes.data.length > 0) {
-          const mappedCats: ScrapCategoryItem[] = catRes.data.map((c: any) => ({
-            id: c._id || c.id,
-            name: c.name,
-            code: c.code,
-            emoji: c.code === 'PAPER' ? '📄' : c.code === 'PLASTIC' ? '🍾' : c.code === 'METAL' ? '⚙️' : c.code === 'E_WASTE' ? '💻' : '📦',
-            description: `Verified ${c.name} materials`,
-          }));
-          setCategories(mappedCats);
-        }
+      if (catRes.success && Array.isArray(catRes.data) && catRes.data.length > 0) {
+        const mappedCats: ScrapCategoryItem[] = catRes.data.map((c: any) => ({
+          id: String(c._id || c.id),
+          name: c.name,
+          code: c.code,
+          emoji:
+            c.code === 'PAPER'
+              ? '📄'
+              : c.code === 'PLASTIC'
+              ? '🍾'
+              : c.code === 'METAL'
+              ? '⚙️'
+              : c.code === 'E_WASTE'
+              ? '💻'
+              : c.code === 'RUBBER'
+              ? '🛞'
+              : '📦',
+          description: `Verified ${c.name} materials`,
+        }));
+        setCategories(mappedCats);
+      } else {
+        setCategories([]);
+      }
 
-        if (weightRes.success && Array.isArray(weightRes.data) && weightRes.data.length > 0) {
-          const mappedWeights: WeightRangeItem[] = weightRes.data.map((w: any) => ({
-            id: w._id || w.id,
-            label: w.displayLabel || w.name,
-            description: `${w.minGrams / 1000} - ${w.maxGrams / 1000} kg`,
-            bags: w.displayLabel || 'Standard Bags',
-          }));
+      if (weightRes.success && weightRes.data != null) {
+        const payload = weightRes.data as any;
+        // Live API may return either:
+        // 1) WeightRange[] (current running server)
+        // 2) { bulkLimitKg, ranges: WeightRange[] } (newer catalog payload)
+        const rawRanges: any[] = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.ranges)
+            ? payload.ranges
+            : Array.isArray(payload?.data)
+              ? payload.data
+              : [];
+        const limitKg =
+          !Array.isArray(payload) && Number(payload?.bulkLimitKg) > 0
+            ? Number(payload.bulkLimitKg)
+            : 50;
+        setBulkLimitKg(limitKg);
+
+        if (rawRanges.length > 0) {
+          const mappedWeights: WeightRangeItem[] = rawRanges.map((w: any) => {
+            const minGrams = Number(
+              w.minGrams != null ? w.minGrams : (Number(w.minKg) || 0) * 1000,
+            );
+            const maxGrams = Number(
+              w.maxGrams != null ? w.maxGrams : (Number(w.maxKg) || 0) * 1000,
+            );
+            const minKg = minGrams / 1000;
+            const maxKg = maxGrams / 1000;
+            const isOpenEnded = maxKg >= 1000;
+            const isBulk =
+              typeof w.isBulk === 'boolean' ? w.isBulk : minKg >= limitKg;
+            return {
+              id: String(w._id || w.id),
+              label:
+                w.displayLabel ||
+                w.name ||
+                (isOpenEnded ? `${minKg}+ kg` : `${minKg} – ${maxKg} kg`),
+              description: descriptionForRange(minGrams, maxGrams),
+              bags: bagHintForRange(minGrams, maxGrams),
+              minKg,
+              maxKg,
+              isBulk,
+            };
+          });
           setWeightRanges(mappedWeights);
+          setState((prev) =>
+            prev.selectedWeightRangeId &&
+            mappedWeights.some((w) => w.id === prev.selectedWeightRangeId)
+              ? prev
+              : { ...prev, selectedWeightRangeId: mappedWeights[0].id },
+          );
+        } else {
+          setWeightRanges([]);
+          setCatalogError(
+            'No weight ranges in the catalog yet. Ask admin to open Settings → weight ranges, or restart the API after seeding.',
+          );
         }
+      } else {
+        setWeightRanges([]);
+        if (!weightRes.success) {
+          setCatalogError(getApiErrorMessage(weightRes.error, 'Unable to load weight ranges.'));
+        }
+      }
 
-        if (slotRes.success && Array.isArray(slotRes.data) && slotRes.data.length > 0) {
-          const mappedSlots: TimeSlotItem[] = slotRes.data.map((s: any) => ({
-            id: s._id || s.id,
-            period: (parseInt(s.startTime?.split(':')[0] || '10') < 12 ? 'morning' : parseInt(s.startTime?.split(':')[0] || '14') < 16 ? 'afternoon' : 'evening') as any,
+      if (slotRes.success && Array.isArray(slotRes.data) && slotRes.data.length > 0) {
+        const mappedSlots: TimeSlotItem[] = slotRes.data.map((s: any) => {
+          const hour = parseInt(String(s.startTime || '10').split(':')[0], 10);
+          const period: TimeSlotItem['period'] =
+            hour < 12 ? 'morning' : hour < 16 ? 'afternoon' : 'evening';
+          return {
+            id: String(s._id || s.id),
+            period,
             displayLabel: s.displayLabel || `${s.startTime} - ${s.endTime}`,
             startTime: s.startTime,
             endTime: s.endTime,
-          }));
-          setTimeSlots(mappedSlots);
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      isMounted = false;
-    };
+          };
+        });
+        setTimeSlots(mappedSlots);
+        setState((prev) =>
+          prev.selectedSlotId ? prev : { ...prev, selectedSlotId: mappedSlots[0].id },
+        );
+      } else {
+        setTimeSlots([]);
+      }
+    } catch (err: any) {
+      setCatalogError(err?.message || 'Unable to load booking catalog.');
+    } finally {
+      setIsCatalogLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    refreshCatalog();
+  }, [refreshCatalog]);
 
   const setStep = (step: 1 | 2 | 3 | 4 | 5) => {
     setState((prev) => ({ ...prev, step }));
@@ -182,6 +263,10 @@ export function PickupBookingProvider({ children }: { children: React.ReactNode 
     setState((prev) => ({ ...prev, selectedSlotId: slotId }));
   };
 
+  const setAddressId = (addressId: string) => {
+    setState((prev) => ({ ...prev, addressId }));
+  };
+
   const setPaymentPreference = (pref: 'CASH' | 'UPI' | 'DONATE') => {
     setState((prev) => ({ ...prev, paymentPreference: pref }));
   };
@@ -204,12 +289,17 @@ export function PickupBookingProvider({ children }: { children: React.ReactNode 
         state,
         categories,
         weightRanges,
+        bulkLimitKg,
         timeSlots,
+        isCatalogLoading,
+        catalogError,
+        refreshCatalog,
         setStep,
         toggleCategory,
         setWeightRange,
         setDate,
         setSlot,
+        setAddressId,
         setPaymentPreference,
         setRemarks,
         setConfirmedPickup,

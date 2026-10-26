@@ -31,15 +31,12 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
       if (res.success && Array.isArray(res.data)) {
         const mapped: PickupItemData[] = res.data.map((item: any) => ({
           id: item._id || item.id,
-          pickupCode: item.orderNumber || `AKP-${(item._id || item.id).slice(-5).toUpperCase()}`,
+          pickupCode: item.pickupCode || '—',
           status: item.status || 'REQUESTED',
-          scheduledDate: item.scheduledSlot?.date || 'Today',
-          timeSlotSnapshot: { displayLabel: item.scheduledSlot?.window || 'Standard Window' },
-          locationLabel: typeof item.address === 'string' ? item.address : item.address?.streetAddress || item.address?.locality || 'Address on record',
-          assignment: item.assignedEmployeeProfileId ? {
-            employeeName: item.assignedEmployeeProfileId.fullName || 'Field Driver',
-            employeeCode: item.assignedEmployeeProfileId.employeeCode,
-          } : undefined,
+          scheduledDate: item.scheduledDate || '',
+          timeSlotSnapshot: item.timeSlotSnapshot,
+          addressSnapshot: item.addressSnapshot,
+          assignment: item.assignment,
           totals: item.totals,
         }));
         setLivePickups(mapped);
@@ -60,12 +57,12 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
   // Real database dynamic lists
   const scheduledList = useMemo(() => {
     return livePickups.filter((p) =>
-      ['REQUESTED', 'SCHEDULED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'VERIFIED'].includes(p.status)
+      ['REQUESTED', 'SCHEDULED', 'ASSIGNED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'MEASURED', 'SUMMARY_READY', 'CUSTOMER_CONFIRMED', 'VERIFIED'].includes(p.status)
     );
   }, [livePickups]);
 
   const completedList = useMemo(() => {
-    return livePickups.filter((p) => p.status === 'COMPLETED');
+    return livePickups.filter((p) => ['COMPLETED', 'SETTLED'].includes(p.status));
   }, [livePickups]);
 
   const cancelledList = useMemo(() => {
@@ -170,6 +167,7 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
                 key={pickup.id}
                 pickup={pickup}
                 onClick={() => onOpenPickupDetails(pickup)}
+                onInvoice={() => setSelectedInvoicePickup(pickup)}
               />
             ))}
           </div>
