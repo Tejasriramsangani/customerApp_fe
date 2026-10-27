@@ -9,7 +9,6 @@ import {
   RefreshCw,
   Clock,
   Sparkles,
-  QrCode,
   CheckCircle2,
 } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
@@ -20,6 +19,7 @@ import { SelectedCategoriesEditor } from './SelectedCategoriesEditor';
 import { RescheduleModal } from './RescheduleModal';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { CancelPickupModal } from './CancelPickupModal';
+import { PickupQrCard } from './PickupQrCard';
 import { apiClient } from '../../lib/api-client';
 
 export interface PickupDetailData {
@@ -84,7 +84,6 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [qrValue, setQrValue] = useState<string>('');
   const [summary, setSummary] = useState<any>(null);
   const [isApproving, setIsApproving] = useState(false);
 
@@ -290,11 +289,6 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
   useEffect(() => {
     if (!pickup || !currentPickupId) return;
-    if (['ASSIGNED', 'ON_THE_WAY', 'ARRIVED'].includes(pickup.status)) {
-      apiClient.getQr<any>(currentPickupId).then((res) => {
-        if (res.success) setQrValue(res.data?.token || res.data?.qrToken || res.data?.code || '');
-      });
-    }
     if (pickup.status === 'SUMMARY_READY') {
       apiClient.getSummary<any>(currentPickupId).then((res) => {
         if (res.success) setSummary(res.data);
@@ -395,6 +389,18 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           <EmployeeContactCard employee={pickup.assignment} />
         )}
 
+        {/* Doorstep verification QR — show once employee is assigned / arriving */}
+        {currentPickupId && (
+          <div className="mb-4">
+            <PickupQrCard
+              pickupId={currentPickupId}
+              pickupCode={pickup.pickupCode}
+              status={String(pickup.status)}
+              emphasized={pickup.status === 'ON_THE_WAY' || pickup.status === 'ARRIVED'}
+            />
+          </div>
+        )}
+
         {/* 4. Selected Categories Editor (Image 4) */}
         <SelectedCategoriesEditor
           categoryIds={categoryIds}
@@ -472,15 +478,6 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           isLocked={isLocked}
           onSavePreparation={handleSavePreparation}
         />
-
-        {qrValue && (
-          <div className="w-full bg-white rounded-2xl p-4 border border-slate-200 mb-4">
-            <div className="flex items-center gap-2 text-xs font-black text-slate-900 mb-2">
-              <QrCode className="w-4 h-4 text-emerald-800" /> Pickup verification code
-            </div>
-            <code className="block break-all text-xs bg-slate-50 p-3 rounded-xl">{qrValue}</code>
-          </div>
-        )}
 
         {pickup.status === 'SUMMARY_READY' && summary && (
           <div className="w-full bg-white rounded-2xl p-4 border border-emerald-200 mb-4 space-y-3">
