@@ -315,7 +315,10 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#F8FAFC] pb-10 flex flex-col">
+    // Mobile: body scrolls (min-h-screen). Desktop: the root layout clips
+    // children inside a fixed-height phone frame (overflow-hidden), so this
+    // root must be the scroll container or the page cannot scroll at all.
+    <div className="w-full min-h-screen md:min-h-0 md:h-full md:overflow-y-auto no-scrollbar bg-[#F8FAFC] pb-10 flex flex-col">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-4 inset-x-4 z-50 flex justify-center pointer-events-none animate-in fade-in slide-in-from-top-4">
