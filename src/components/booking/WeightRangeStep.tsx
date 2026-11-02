@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowRight, RefreshCw, AlertCircle, ShoppingBag, Package, Boxes, Container, Truck } from 'lucide-react';
 import { usePickupBooking, WeightRangeItem } from '../../context/PickupBookingContext';
 
 interface WeightRangeStepProps {
@@ -10,71 +10,27 @@ interface WeightRangeStepProps {
   onNext: () => void;
 }
 
-/** Visual stack of bags/boxes matching the booking design (small → bulk). */
-const WeightVisual: React.FC<{ item: WeightRangeItem; selected: boolean }> = ({
-  item,
-  selected,
-}) => {
-  const tone = selected ? 'opacity-100' : 'opacity-80';
-  const level =
-    item.isBulk || item.minKg >= 50
-      ? 5
-      : item.minKg >= 30
-        ? 4
-        : item.minKg >= 20
-          ? 3
-          : item.minKg >= 10
-            ? 2
-            : 1;
+/** Icon + tint per size tier, small bag -> large load. Keeps the list scannable at a glance. */
+const TIERS = [
+  { Icon: ShoppingBag, tint: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+  { Icon: Package, tint: 'bg-lime-50 text-lime-700 border-lime-100' },
+  { Icon: Boxes, tint: 'bg-amber-50 text-amber-700 border-amber-100' },
+  { Icon: Container, tint: 'bg-orange-50 text-orange-700 border-orange-100' },
+  { Icon: Truck, tint: 'bg-rose-50 text-rose-700 border-rose-100' },
+] as const;
 
+const tierIndex = (minKg: number) => (minKg >= 50 ? 4 : minKg >= 30 ? 3 : minKg >= 20 ? 2 : minKg >= 10 ? 1 : 0);
+
+const WeightVisual: React.FC<{ item: WeightRangeItem; selected: boolean }> = ({ item, selected }) => {
+  const { Icon, tint } = TIERS[tierIndex(item.minKg)];
   return (
-    <div className={`relative w-14 h-12 flex items-end justify-center ${tone}`} aria-hidden>
-      {level === 1 && (
-        <div className="flex items-end gap-0.5">
-          <span className="w-3.5 h-4 rounded-t-md bg-slate-800" />
-          <span className="w-3.5 h-5 rounded-t-md bg-slate-900" />
-          <span className="w-3.5 h-3.5 rounded-t-md bg-slate-700" />
-        </div>
-      )}
-      {level === 2 && (
-        <div className="flex items-end gap-0.5">
-          <span className="w-4 h-5 rounded-t-md bg-slate-300 border border-slate-400" />
-          <span className="w-4 h-6 rounded-t-md bg-slate-200 border border-slate-400" />
-          <span className="w-4 h-4 rounded-t-md bg-slate-300 border border-slate-400" />
-        </div>
-      )}
-      {level === 3 && (
-        <div className="flex items-end gap-0.5">
-          <span className="w-3.5 h-5 rounded-sm bg-emerald-600" />
-          <span className="w-4 h-4 rounded-sm bg-amber-700/80" />
-          <span className="w-3.5 h-6 rounded-t-md bg-emerald-700" />
-          <span className="w-3.5 h-3.5 rounded-sm bg-amber-800/70" />
-        </div>
-      )}
-      {level === 4 && (
-        <div className="flex items-end gap-0.5">
-          <span className="w-4 h-6 rounded-t-md bg-slate-900" />
-          <span className="w-4 h-5 rounded-t-md bg-slate-800" />
-          <div className="flex flex-col gap-0.5">
-            <span className="w-4 h-2 rounded-sm bg-amber-700/80" />
-            <span className="w-4 h-2 rounded-sm bg-amber-800/70" />
-            <span className="w-4 h-2 rounded-sm bg-amber-700/80" />
-          </div>
-        </div>
-      )}
-      {level === 5 && (
-        <div className="flex items-end gap-0.5">
-          <span className="w-3.5 h-7 rounded-t-md bg-slate-900" />
-          <span className="w-3.5 h-6 rounded-t-md bg-slate-800" />
-          <div className="flex flex-col gap-0.5 mb-0.5">
-            <span className="w-4 h-1.5 rounded-sm bg-amber-700/90" />
-            <span className="w-4 h-1.5 rounded-sm bg-amber-800/80" />
-            <span className="w-4 h-1.5 rounded-sm bg-amber-700/90" />
-            <span className="w-4 h-1.5 rounded-sm bg-amber-800/70" />
-          </div>
-          <span className="w-3.5 h-5 rounded-t-md bg-slate-700" />
-        </div>
-      )}
+    <div
+      className={`w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 transition-colors ${
+        selected ? 'bg-[#0A3D2B] text-white border-[#0A3D2B] shadow-md shadow-emerald-950/20' : tint
+      }`}
+      aria-hidden
+    >
+      <Icon className="w-6 h-6 stroke-[1.9]" />
     </div>
   );
 };
@@ -83,7 +39,6 @@ export const WeightRangeStep: React.FC<WeightRangeStepProps> = ({ onBack, onNext
   const {
     state,
     weightRanges,
-    bulkLimitKg,
     isCatalogLoading,
     catalogError,
     setWeightRange,
@@ -143,13 +98,7 @@ export const WeightRangeStep: React.FC<WeightRangeStepProps> = ({ onBack, onNext
                       : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}
                 >
-                  <div
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                      isSelected ? 'border-[#0A3D2B] bg-white' : 'border-slate-300 bg-white'
-                    }`}
-                  >
-                    {isSelected && <div className="w-3.5 h-3.5 rounded-full bg-[#0A3D2B]" />}
-                  </div>
+                  <WeightVisual item={item} selected={isSelected} />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -160,19 +109,19 @@ export const WeightRangeStep: React.FC<WeightRangeStepProps> = ({ onBack, onNext
                       >
                         {item.label}
                       </h3>
-                      {item.isBulk && (
-                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
-                          Bulk · from {bulkLimitKg} kg
-                        </span>
-                      )}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">
                       {item.description}
-                      {item.bags ? ` (${item.bags})` : ''}
+                      {item.bags ? ` · ${item.bags}` : ''}
                     </p>
                   </div>
-
-                  <WeightVisual item={item} selected={isSelected} />
+                  <div
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected ? 'border-[#0A3D2B] bg-white' : 'border-slate-300 bg-white'
+                    }`}
+                  >
+                    {isSelected && <div className="w-3.5 h-3.5 rounded-full bg-[#0A3D2B]" />}
+                  </div>
                 </motion.button>
               );
             })}

@@ -53,7 +53,7 @@ export const TodayScrapRatesPreview: React.FC<TodayScrapRatesPreviewProps> = ({
                   name: p.name,
                   price,
                   unit: p.unit || 'kg',
-                  emoji: getEmojiForCategory(cat.name),
+                  emoji: p.emoji || cat.emoji || getEmojiForCategory(cat.name),
                   category: cat.name,
                 });
               });

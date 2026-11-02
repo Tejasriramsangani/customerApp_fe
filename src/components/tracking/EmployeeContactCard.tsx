@@ -19,8 +19,8 @@ export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employ
   if (!employee) return null;
 
   const phone = employee.employeePhone;
-  const name = employee.employeeName || 'Unassigned';
-  const code = employee.employeeCode || '—';
+  const name = employee.employeeName || 'Your pickup executive';
+  const code = employee.employeeCode;
 
   return (
     <div className="w-full bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 mb-4 transition-all hover:shadow-md">
@@ -45,9 +45,11 @@ export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employ
                 Verified
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">
-              Employee ID: <span className="font-semibold text-slate-700">{code}</span>
-            </p>
+            {code && (
+              <p className="text-xs text-slate-500 font-medium">
+                Employee ID: <span className="font-semibold text-slate-700">{code}</span>
+              </p>
+            )}
             {employee.vehicleNumber && (
               <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-0.5">
                 <Truck className="w-3 h-3 text-emerald-700" />

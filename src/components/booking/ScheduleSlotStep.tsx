@@ -5,12 +5,16 @@ import { motion } from 'framer-motion';
 import {
   ArrowRight,
   Sun,
-  CloudSun,
-  Moon,
   Loader2,
   Sparkles,
   AlertCircle,
   MapPin,
+  Sunrise,
+  Sunset,
+  Clock,
+  Check,
+  CalendarCheck,
+  UserCheck,
 } from 'lucide-react';
 import { usePickupBooking, TimeSlotItem } from '../../context/PickupBookingContext';
 import { useLocation } from '../../context/LocationContext';
@@ -38,6 +42,18 @@ interface RouteDateItem {
   routeScheduleId?: string;
 }
 
+/** A slot must start at least this long from now (a picker needs time to be assigned and travel). */
+const MIN_LEAD_MINUTES = 60;
+
+const localIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const PERIODS: Array<{ key: TimeSlotItem['period']; label: string; hint: string; Icon: typeof Sun; tone: string }> = [
+  { key: 'morning', label: 'Morning', hint: 'Before 12 PM', Icon: Sunrise, tone: 'text-amber-600 bg-amber-50' },
+  { key: 'afternoon', label: 'Afternoon', hint: '12 PM – 4 PM', Icon: Sun, tone: 'text-orange-600 bg-orange-50' },
+  { key: 'evening', label: 'Evening', hint: 'After 4 PM', Icon: Sunset, tone: 'text-indigo-600 bg-indigo-50' },
+];
+
 export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNext }) => {
   const { state, timeSlots, setDate, setSlot, setAddressId } = usePickupBooking();
   const { location, openSheet } = useLocation();
@@ -54,6 +70,23 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
   >([]);
 
   const addressReady = isCompleteBookingAddress(location);
+
+  // Clock tick so "today" slots that have passed or are too close switch off while the screen is open.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const todayIso = localIso(new Date(now));
+
+  const isSlotBookable = (iso: string, startTime: string) => {
+    if (iso !== todayIso) return true;
+    const [h, m] = startTime.split(':').map(Number);
+    const start = new Date(now);
+    start.setHours(h || 0, m || 0, 0, 0);
+    return start.getTime() - now >= MIN_LEAD_MINUTES * 60_000;
+  };
+  const hasBookableSlot = (iso: string) => availableSlots.some((sl) => isSlotBookable(iso, sl.startTime));
 
   useEffect(() => setAvailableSlots(timeSlots), [timeSlots]);
 
@@ -159,15 +192,15 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
 
           setAvailableSlots(slots);
 
-          const apiDates = Array.isArray(data.slotsMode?.dates) ? data.slotsMode.dates : [];
-          const dates = apiDates.length > 0 ? apiDates : buildNextSevenDates();
+          // Build dates from the customer's own clock so "Today" is right in their timezone.
+          const dates = buildNextSevenDates();
           setAvailableDates(dates);
 
           if (dates.length && !dates.some((d: any) => d.iso === state.selectedDate)) {
             setDate(dates[0].iso);
           }
           if (slots.length && !slots.some((s) => s.id === state.selectedSlotId)) {
-            setSlot(slots[0].id);
+            setSlot('');
           }
         }
 
@@ -188,12 +221,15 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
               state.selectedSlotId,
             );
             if (slotId) setSlot(slotId);
-          } else if (data.outOfCoverage) {
-            // Allow request anyway: tomorrow + first catalog slot
-            const fallbackDates = buildNextSevenDates();
-            setAvailableDates(fallbackDates);
-            if (!state.selectedDate) setDate(fallbackDates[1]?.iso || fallbackDates[0].iso);
-            if (timeSlots[0] && !state.selectedSlotId) setSlot(timeSlots[0].id);
+          } else {
+            // No collection route covers this address. We do not run fixed route days yet, so fall
+            // back to the same date + time slot picker; admin assigns a picker for the chosen slot.
+            setAvailabilityMode('SLOTS');
+            setOutOfCoverage(false);
+            setHelperText('');
+            setAvailableSlots(timeSlots);
+            setAvailableDates(buildNextSevenDates());
+            setSlot('');
           }
         }
       } catch {
@@ -221,9 +257,23 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
     addressReady,
   ]);
 
-  const morningSlots = availableSlots.filter((s) => s.period === 'morning');
-  const afternoonSlots = availableSlots.filter((s) => s.period === 'afternoon');
-  const eveningSlots = availableSlots.filter((s) => s.period === 'evening');
+  // Keep the selection valid: never leave a passed slot selected, and move to the next day when
+  // nothing is left today. The customer picks the time themselves rather than us guessing one.
+  useEffect(() => {
+    if (availabilityMode !== 'SLOTS' || availableSlots.length === 0) return;
+    const dates = availableDates.length > 0 ? availableDates : buildNextSevenDates();
+    let date = state.selectedDate;
+    if (!date || !dates.some((d) => d.iso === date) || !hasBookableSlot(date)) {
+      const next = dates.find((d) => hasBookableSlot(d.iso));
+      if (next && next.iso !== date) {
+        date = next.iso;
+        setDate(next.iso);
+      }
+    }
+    const chosen = availableSlots.find((sl) => sl.id === state.selectedSlotId);
+    if (chosen && date && !isSlotBookable(date, chosen.startTime)) setSlot('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availabilityMode, availableSlots, availableDates, state.selectedDate, state.selectedSlotId, now]);
 
   const displayDates = useMemo(() => {
     if (availabilityMode === 'SLOTS') {
@@ -251,8 +301,6 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
         const fallback = routeDates[0]?.iso || buildNextSevenDates()[1]?.iso;
         if (fallback) setDate(fallback);
       }
-    } else if (!state.selectedSlotId && availableSlots[0]) {
-      setSlot(availableSlots[0].id);
     }
     onNext();
   };
@@ -262,9 +310,11 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
     (Boolean(state.selectedDate && routeDates.length) ||
       (outOfCoverage && Boolean(state.selectedDate || timeSlots.length)));
 
+  const selectedSlot = availableSlots.find((sl) => sl.id === state.selectedSlotId);
+  const selectedDateItem = displayDates.find((d) => d.iso === state.selectedDate);
   const canContinueSlots =
     availabilityMode === 'SLOTS' &&
-    Boolean(state.selectedDate && (state.selectedSlotId || availableSlots[0]));
+    Boolean(state.selectedDate && selectedSlot && isSlotBookable(state.selectedDate, selectedSlot.startTime));
 
   const isContinueEnabled =
     !loading &&
@@ -282,7 +332,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
           <p className="text-xs text-slate-500 mt-1">
             {availabilityMode === 'ROUTE_DAYS'
               ? 'Select your preferred collection date for your area.'
-              : 'Choose your preferred date and convenient time window.'}
+              : 'Choose a date and time window that suits you. We will assign a picker for it.'}
           </p>
         </div>
 
@@ -310,7 +360,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
             <Loader2 className="w-6 h-6 animate-spin text-[#0A3D2B]" />
-            <span className="text-xs font-semibold">Checking area schedule...</span>
+            <span className="text-xs font-semibold">Loading available slots...</span>
           </div>
         ) : availabilityError && addressReady ? (
           <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-3">
@@ -413,142 +463,157 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
             ) : null}
           </div>
         ) : (
-          <div className="space-y-5 animate-in fade-in duration-200">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-2 px-0.5">
-                Select Pickup Date
-              </label>
-              <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Date strip */}
+            <section>
+              <div className="flex items-center justify-between mb-2.5 px-0.5">
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Pickup date</h3>
+                {selectedDateItem && (
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {selectedDateItem.weekday}, {selectedDateItem.dayNum} {selectedDateItem.monthStr}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-stretch gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
                 {displayDates.map((item) => {
                   const isSelected = state.selectedDate === item.iso;
+                  const full = !hasBookableSlot(item.iso);
                   return (
-                    <motion.div
+                    <motion.button
                       key={item.iso}
-                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      disabled={full}
+                      whileTap={full ? undefined : { scale: 0.95 }}
                       onClick={() => setDate(item.iso)}
-                      className={`min-w-[76px] py-3 px-2 rounded-2xl border-2 flex flex-col items-center justify-center cursor-pointer transition-all shadow-xs ${
-                        isSelected
-                          ? 'border-[#0A3D2B] bg-[#0A3D2B] text-white shadow-md shadow-emerald-950/20'
-                          : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'
+                      aria-pressed={isSelected}
+                      className={`shrink-0 w-[68px] py-2.5 rounded-2xl border-2 flex flex-col items-center transition-all ${
+                        full
+                          ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
+                          : isSelected
+                            ? 'border-[#0A3D2B] bg-[#0A3D2B] text-white shadow-md shadow-emerald-950/20'
+                            : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'
                       }`}
                     >
                       <span
                         className={`text-[10px] font-bold uppercase tracking-wider ${
-                          isSelected ? 'text-[#F59E0B]' : 'text-slate-400'
+                          full ? 'text-slate-300' : isSelected ? 'text-[#F59E0B]' : 'text-slate-400'
                         }`}
                       >
                         {item.label}
                       </span>
-                      <span className="text-lg font-black my-0.5 leading-none">{item.dayNum}</span>
-                      <span
-                        className={`text-[10px] font-medium ${
-                          isSelected ? 'text-emerald-100' : 'text-slate-500'
-                        }`}
-                      >
+                      <span className="text-xl font-black leading-none my-1">{item.dayNum}</span>
+                      <span className={`text-[10px] font-medium ${isSelected ? 'text-emerald-100' : ''}`}>
                         {item.monthStr}
                       </span>
-                    </motion.div>
+                    </motion.button>
                   );
                 })}
               </div>
-            </div>
+            </section>
 
-            <div className="space-y-4">
-              <label className="text-xs font-bold text-slate-700 block px-0.5 -mb-2">
-                Select Time Slot
-              </label>
+            {/* Time slots grouped by part of day */}
+            <section className="space-y-4">
+              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider px-0.5">Time slot</h3>
 
               {availableSlots.length === 0 ? (
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
                   No time slots are configured yet. Please retry later or contact support.
                 </div>
               ) : (
-                <>
-                  {morningSlots.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-700">
-                        <Sun className="w-3.5 h-3.5" />
-                        <span>Morning Slots</span>
+                PERIODS.map(({ key, label, hint, Icon, tone }) => {
+                  const group = availableSlots.filter((sl) => sl.period === key);
+                  if (group.length === 0) return null;
+                  return (
+                    <div key={key} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-6 h-6 rounded-lg flex items-center justify-center ${tone}`}>
+                          <Icon className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="text-xs font-extrabold text-slate-800">{label}</span>
+                        <span className="text-[10px] font-medium text-slate-400">{hint}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        {morningSlots.map((slot) => {
+                        {group.map((slot) => {
                           const isSelected = state.selectedSlotId === slot.id;
+                          const bookable = isSlotBookable(state.selectedDate, slot.startTime);
                           return (
                             <button
                               key={slot.id}
                               type="button"
+                              disabled={!bookable}
                               onClick={() => setSlot(slot.id)}
-                              className={`py-3 px-3 rounded-2xl border-2 text-xs font-bold transition-all text-center ${
-                                isSelected
-                                  ? 'border-[#0A3D2B] bg-[#0A3D2B] text-white shadow-sm'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              aria-pressed={isSelected}
+                              className={`relative py-3 px-3 rounded-2xl border-2 text-left transition-all ${
+                                !bookable
+                                  ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
+                                  : isSelected
+                                    ? 'border-[#0A3D2B] bg-emerald-50/70 ring-1 ring-[#0A3D2B]/30'
+                                    : 'border-slate-200 bg-white hover:border-slate-300'
                               }`}
                             >
-                              {slot.displayLabel}
+                              <span className="flex items-center gap-1.5">
+                                <Clock
+                                  className={`w-3.5 h-3.5 shrink-0 ${
+                                    isSelected ? 'text-[#0A3D2B]' : bookable ? 'text-slate-400' : 'text-slate-300'
+                                  }`}
+                                />
+                                <span
+                                  className={`text-xs font-extrabold leading-tight ${
+                                    isSelected ? 'text-[#0A3D2B]' : bookable ? 'text-slate-800' : 'text-slate-300'
+                                  }`}
+                                >
+                                  {slot.displayLabel}
+                                </span>
+                              </span>
+                              {!bookable && (
+                                <span className="block text-[10px] font-semibold text-slate-400 mt-1">
+                                  Not available today
+                                </span>
+                              )}
+                              {isSelected && (
+                                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#0A3D2B] text-white flex items-center justify-center shadow">
+                                  <Check className="w-3 h-3 stroke-[3]" />
+                                </span>
+                              )}
                             </button>
                           );
                         })}
                       </div>
                     </div>
-                  )}
-
-                  {afternoonSlots.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-amber-800">
-                        <CloudSun className="w-3.5 h-3.5" />
-                        <span>Afternoon Slots</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {afternoonSlots.map((slot) => {
-                          const isSelected = state.selectedSlotId === slot.id;
-                          return (
-                            <button
-                              key={slot.id}
-                              type="button"
-                              onClick={() => setSlot(slot.id)}
-                              className={`py-3 px-3 rounded-2xl border-2 text-xs font-bold transition-all text-center ${
-                                isSelected
-                                  ? 'border-[#0A3D2B] bg-[#0A3D2B] text-white shadow-sm'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                              }`}
-                            >
-                              {slot.displayLabel}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {eveningSlots.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-indigo-950">
-                        <Moon className="w-3.5 h-3.5" />
-                        <span>Evening Slots</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {eveningSlots.map((slot) => {
-                          const isSelected = state.selectedSlotId === slot.id;
-                          return (
-                            <button
-                              key={slot.id}
-                              type="button"
-                              onClick={() => setSlot(slot.id)}
-                              className={`py-3 px-3 rounded-2xl border-2 text-xs font-bold transition-all text-center ${
-                                isSelected
-                                  ? 'border-[#0A3D2B] bg-[#0A3D2B] text-white shadow-sm'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                              }`}
-                            >
-                              {slot.displayLabel}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </>
+                  );
+                })
               )}
+            </section>
+
+            {/* Selection summary + what happens next */}
+            <div
+              className={`rounded-2xl border p-3.5 flex items-start gap-3 transition-colors ${
+                canContinueSlots ? 'bg-emerald-50/70 border-emerald-200' : 'bg-slate-50 border-slate-200'
+              }`}
+            >
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  canContinueSlots ? 'bg-[#0A3D2B] text-white' : 'bg-slate-200 text-slate-500'
+                }`}
+              >
+                <CalendarCheck className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                {canContinueSlots && selectedDateItem && selectedSlot ? (
+                  <>
+                    <p className="text-xs font-extrabold text-[#0A3D2B]">
+                      {selectedDateItem.weekday}, {selectedDateItem.dayNum} {selectedDateItem.monthStr} ·{' '}
+                      {selectedSlot.displayLabel}
+                    </p>
+                    <p className="text-[11px] text-emerald-800/80 mt-0.5 flex items-center gap-1">
+                      <UserCheck className="w-3 h-3 shrink-0" />
+                      Our team will assign a picker and confirm with you.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs font-semibold text-slate-500 pt-2">Pick a date and a time slot to continue.</p>
+                )}
+              </div>
             </div>
           </div>
         )}

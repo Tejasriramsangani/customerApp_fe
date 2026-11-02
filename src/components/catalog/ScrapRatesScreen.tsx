@@ -20,14 +20,10 @@ interface ScrapRateItem {
   emoji: string;
 }
 
-const CATEGORIES = [
-  { id: 'all', label: 'All' },
-  { id: 'metal', label: 'Metal' },
-  { id: 'paper', label: 'Paper' },
-  { id: 'plastic', label: 'Plastic' },
-  { id: 'ewaste', label: 'E-Waste' },
-  { id: 'others', label: 'Others' },
-];
+interface CategoryPill {
+  id: string;
+  label: string;
+}
 
 export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
   areaName,
@@ -36,6 +32,7 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [rates, setRates] = useState<ScrapRateItem[]>([]);
+  const [categoryPills, setCategoryPills] = useState<CategoryPill[]>([{ id: 'all', label: 'All' }]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch live catalog from backend
@@ -46,26 +43,32 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
         const res = await apiClient.get('/catalog');
         if (res.success && Array.isArray(res.data)) {
           const mapped: ScrapRateItem[] = [];
+          const pills: CategoryPill[] = [{ id: 'all', label: 'All' }];
+          // /catalog only returns admin-enabled categories/products, with margin-inclusive rates.
           res.data.forEach((cat: any) => {
-            const catCode = cat.code?.toLowerCase() || cat.name?.toLowerCase() || 'others';
+            const catId = String(cat._id || cat.id);
             if (Array.isArray(cat.products)) {
+              let hasPricedProduct = false;
               cat.products.forEach((p: any) => {
                 const price = p.activeRate?.ratePerKgRupees ??
                   (p.activeRate?.ratePerKgPaise != null ? p.activeRate.ratePerKgPaise / 100 : null);
                 if (price == null) return;
+                hasPricedProduct = true;
                 mapped.push({
                   id: p._id || p.id,
                   name: p.name,
-                  category: catCode.includes('metal') ? 'metal' : catCode.includes('paper') ? 'paper' : catCode.includes('plastic') ? 'plastic' : catCode.includes('waste') ? 'ewaste' : 'others',
+                  category: catId,
                   subLabel: `Verified ${cat.name} material`,
-                  pricePerKg: price,
+                  pricePerKg: Number(price),
                   unit: p.unit || 'kg',
-                  emoji: catCode.includes('paper') ? '📰' : catCode.includes('plastic') ? '🍾' : catCode.includes('metal') ? '⚙️' : catCode.includes('ewaste') ? '💻' : '♻️',
+                  emoji: p.emoji || cat.emoji || '♻️',
                 });
               });
+              if (hasPricedProduct) pills.push({ id: catId, label: cat.name });
             }
           });
           setRates(mapped);
+          setCategoryPills(pills);
         }
       } catch {
         setRates([]);
@@ -125,7 +128,7 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
 
       {/* Category Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
-        {CATEGORIES.map((cat) => (
+        {categoryPills.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}

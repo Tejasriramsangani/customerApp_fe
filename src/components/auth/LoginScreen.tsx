@@ -8,7 +8,8 @@ import { BrandLogo } from '../common/BrandLogo';
 
 interface LoginScreenProps {
   onBack?: () => void;
-  onOtpSent: (mobileNumber: string) => void;
+  /** devOtp is only present when the backend runs with SMS_PROVIDER=mock (no SMS is sent). */
+  onOtpSent: (mobileNumber: string, devOtp?: string) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) => {
@@ -29,13 +30,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) =
     setErrorMessage(null);
 
     try {
-      const res = await apiClient.post('/auth/otp/send', {
+      const res = await apiClient.post<{ devOtp?: string }>('/auth/otp/send', {
         mobile: normalizeMobile(mobileNumber),
         purpose: 'LOGIN',
       });
 
       if (res.success) {
-        onOtpSent(normalizeMobile(mobileNumber));
+        onOtpSent(normalizeMobile(mobileNumber), res.data?.devOtp);
       } else {
         setErrorMessage(getApiErrorMessage(res.error, 'Failed to send verification code. Please try again.'));
       }

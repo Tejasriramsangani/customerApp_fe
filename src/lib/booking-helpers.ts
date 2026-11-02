@@ -1,5 +1,8 @@
 import type { TimeSlotItem } from '../context/PickupBookingContext';
 
+/** Bulk ordering is paused: every order is a date + slot booking that admin assigns. Flip to show bulk UI again. */
+export const SHOW_BULK_UI = false;
+
 /** Next 7 calendar days for SLOTS-mode date strip when API omits dates. */
 export function buildNextSevenDates(from = new Date()) {
   const dates: Array<{

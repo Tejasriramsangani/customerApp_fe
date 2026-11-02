@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../lib/api-client';
+import { enablePush, disablePush } from '../lib/push';
 
 export interface CustomerUser {
   id: string;
@@ -67,6 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { mounted = false; };
   }, []);
 
+  // Register this phone for push once the user is signed in (restored session or fresh login).
+  // No-op in a normal browser.
+  useEffect(() => {
+    if (!user?.id || !accessToken) return;
+    void enablePush((token, platform) => apiClient.post('/devices', { token, platform }));
+  }, [user?.id, accessToken]);
+
   const login = (newAccessToken: string, newRefreshToken: string, newUser: CustomerUser) => {
     localStorage.setItem('aslikaata_customer_access_token', newAccessToken);
     localStorage.setItem('aslikaata_customer_refresh_token', newRefreshToken);
@@ -83,6 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    // Must run before clearTokens(): the request needs the access token.
+    disablePush((token) => apiClient.request('/devices', { method: 'DELETE', body: JSON.stringify({ token }) }));
     apiClient.clearTokens();
     setAccessToken(null);
     setUser(null);

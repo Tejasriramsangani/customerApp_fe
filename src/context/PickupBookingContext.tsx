@@ -9,6 +9,10 @@ export interface ScrapCategoryItem {
   code: string;
   emoji: string;
   description: string;
+  /** Lowest live customer rate (margin already applied) in rupees/kg, null if unpriced. */
+  startingRatePerKg: number | null;
+  /** Enabled products with a live rate, e.g. for "Iron · Copper · Brass" hints. */
+  products: Array<{ id: string; name: string; ratePerKg: number }>;
 }
 
 export interface WeightRangeItem {
@@ -113,30 +117,44 @@ export function PickupBookingProvider({ children }: { children: React.ReactNode 
     setCatalogError('');
     try {
       const [catRes, weightRes, slotRes] = await Promise.all([
-        apiClient.get('/catalog/categories'),
+        // Full catalog = only admin-enabled categories/products, with live margin-inclusive rates.
+        apiClient.get('/catalog'),
         apiClient.get('/catalog/weight-ranges'),
         apiClient.get('/catalog/slots'),
       ]);
 
       if (catRes.success && Array.isArray(catRes.data) && catRes.data.length > 0) {
-        const mappedCats: ScrapCategoryItem[] = catRes.data.map((c: any) => ({
-          id: String(c._id || c.id),
-          name: c.name,
-          code: c.code,
-          emoji:
-            c.code === 'PAPER'
-              ? '📄'
-              : c.code === 'PLASTIC'
-              ? '🍾'
-              : c.code === 'METAL'
-              ? '⚙️'
-              : c.code === 'E_WASTE'
-              ? '💻'
-              : c.code === 'RUBBER'
-              ? '🛞'
-              : '📦',
-          description: `Verified ${c.name} materials`,
-        }));
+        const mappedCats: ScrapCategoryItem[] = catRes.data.map((c: any) => {
+          const products = (Array.isArray(c.products) ? c.products : [])
+            .filter((p: any) => p.activeRate)
+            .map((p: any) => ({
+              id: String(p._id || p.id),
+              name: p.name as string,
+              ratePerKg: Number(
+                p.activeRate.ratePerKgRupees ?? (p.activeRate.ratePerKgPaise ?? 0) / 100,
+              ),
+            }));
+          const startingRatePerKg =
+            c.startingRatePerKgRupees != null
+              ? Number(c.startingRatePerKgRupees)
+              : products.length
+              ? Math.min(...products.map((p: { ratePerKg: number }) => p.ratePerKg))
+              : null;
+          return {
+            id: String(c._id || c.id),
+            name: c.name,
+            code: c.code,
+            emoji: c.emoji || '📦',
+            description: products.length
+              ? products
+                  .slice(0, 3)
+                  .map((p: { name: string }) => p.name)
+                  .join(' · ')
+              : `Verified ${c.name} materials`,
+            startingRatePerKg,
+            products,
+          };
+        });
         setCategories(mappedCats);
       } else {
         setCategories([]);

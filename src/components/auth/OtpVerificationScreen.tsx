@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Edit2, KeyRound, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Edit2, KeyRound, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { apiClient, getApiErrorMessage, normalizeMobile } from '../../lib/api-client';
 import { useAuth } from '../../context/AuthContext';
 
 interface OtpVerificationScreenProps {
   mobileNumber: string;
+  /** OTP returned by the backend when SMS_PROVIDER=mock; null when a real SMS was sent. */
+  initialDevOtp?: string | null;
   onBack: () => void;
   onEditMobile: () => void;
   onSuccess: (isNewUser: boolean) => void;
@@ -15,6 +17,7 @@ interface OtpVerificationScreenProps {
 
 export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
   mobileNumber,
+  initialDevOtp = null,
   onBack,
   onEditMobile,
   onSuccess,
@@ -25,6 +28,7 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [devOtp, setDevOtp] = useState<string | null>(initialDevOtp);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -144,13 +148,14 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
     setErrorMessage(null);
 
     try {
-      const res = await apiClient.post('/auth/otp/send', {
+      const res = await apiClient.post<{ devOtp?: string }>('/auth/otp/send', {
         mobile: normalizeMobile(mobileNumber),
         purpose: 'LOGIN',
       });
 
       if (res.success) {
         setTimer(30);
+        setDevOtp(res.data?.devOtp ?? null);
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       } else {
@@ -161,6 +166,10 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
     } finally {
       setIsResending(false);
     }
+  };
+
+  const fillDevOtp = () => {
+    if (devOtp && /^d{6}$/.test(devOtp)) setOtp(devOtp.split(''));
   };
 
   const isFull = otp.every((d) => d !== '');
@@ -237,6 +246,30 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
             />
           ))}
         </div>
+
+        {/* SMS_PROVIDER=mock: no SMS is sent, so show the OTP that was just generated */}
+        {devOtp && (
+          <div className="mt-5 mx-auto max-w-sm p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 min-w-0">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span className="truncate">
+                  Test OTP: <strong className="font-mono text-sm tracking-widest text-slate-900">{devOtp}</strong>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={fillDevOtp}
+                className="shrink-0 px-2.5 py-1 rounded-lg bg-[#0A3D2B] text-white font-black text-[10px] uppercase tracking-wider hover:bg-[#0E4D36]"
+              >
+                Fill
+              </button>
+            </div>
+            <p className="text-[10px] text-amber-800/80 leading-relaxed">
+              SMS provider is in mock mode, so no SMS was sent. This code is shown here for testing only.
+            </p>
+          </div>
+        )}
 
         {/* Error Message */}
         {errorMessage && (

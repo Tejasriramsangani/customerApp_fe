@@ -25,6 +25,8 @@ import { ProfileScreen } from '../components/profile/ProfileScreen';
 import { BrandLogo } from '../components/common/BrandLogo';
 import { ServerDownScreen } from '../components/common/ServerDownScreen';
 import { apiClient } from '../lib/api-client';
+import { SHOW_BULK_UI } from '../lib/booking-helpers';
+import { onPushOpen, PUSH_RECEIVED_EVENT } from '../lib/push';
 import { Scale, LogOut, Package, ArrowRight, RefreshCw, Calendar, Clock, Sparkles } from 'lucide-react';
 
 type AppFlowStep = 'loading' | 'onboarding' | 'location' | 'login' | 'otp' | 'personalize' | 'app';
@@ -33,6 +35,7 @@ function CustomerApp() {
   const [currentStep, setCurrentStep] = useState<AppFlowStep>('loading');
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [pendingPhone, setPendingPhone] = useState<string>('');
+  const [pendingDevOtp, setPendingDevOtp] = useState<string | null>(null);
   const [selectedPickupForDetails, setSelectedPickupForDetails] = useState<any | null>(null);
   const [myPickups, setMyPickups] = useState<any[]>([]);
   const [isLoadingPickups, setIsLoadingPickups] = useState(false);
@@ -75,6 +78,23 @@ function CustomerApp() {
       setIsLoadingPickups(false);
     }
   }, []);
+
+  // Push notifications (native app only): refresh when one arrives while the app is open,
+  // and open the pickup when the user taps one.
+  useEffect(() => {
+    const onReceived = () => void loadCustomerPickups();
+    window.addEventListener(PUSH_RECEIVED_EVENT, onReceived);
+    const offOpen = onPushOpen(async (data) => {
+      if (!data.pickupId) return;
+      const res = await apiClient.get(`/customer/pickups/${data.pickupId}`);
+      if (res.success && res.data) setSelectedPickupForDetails(res.data);
+      else setActiveTab('pickups');
+    });
+    return () => {
+      window.removeEventListener(PUSH_RECEIVED_EVENT, onReceived);
+      offOpen();
+    };
+  }, [loadCustomerPickups]);
 
   useEffect(() => {
     if (activeTab === 'pickups') {
@@ -129,8 +149,9 @@ function CustomerApp() {
     }
   };
 
-  const handleOtpSent = (phone: string) => {
+  const handleOtpSent = (phone: string, devOtp?: string) => {
     setPendingPhone(phone);
+    setPendingDevOtp(devOtp ?? null);
     setCurrentStep('otp');
   };
 
@@ -191,6 +212,7 @@ function CustomerApp() {
     return (
       <OtpVerificationScreen
         mobileNumber={pendingPhone}
+        initialDevOtp={pendingDevOtp}
         onBack={() => setCurrentStep('login')}
         onEditMobile={() => setCurrentStep('login')}
         onSuccess={handleOtpVerified}
@@ -279,10 +301,12 @@ function CustomerApp() {
             {/* 3. Our Approach — Simple. Transparent. Reliable. (Screen 7) */}
             <OurApproachSection />
 
-            {/* 4. Bulk Scrap Disposal Card (Screen 7) */}
-            <BulkDisposalCard
-              onBookBulk={() => setActiveTab('request')}
-            />
+            {/* 4. Bulk Scrap Disposal Card: hidden for now (every order is a slot booking). Set SHOW_BULK_UI to bring it back. */}
+            {SHOW_BULK_UI && (
+              <BulkDisposalCard
+                onBookBulk={() => setActiveTab('request')}
+              />
+            )}
 
             {/* 5. Together For A Greener Tomorrow (Screen 7) */}
             <GreenerTomorrowSection />

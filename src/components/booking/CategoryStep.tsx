@@ -84,6 +84,12 @@ export const CategoryStep: React.FC<CategoryStepProps> = ({ onBack, onNext }) =>
                     <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
                       {cat.description}
                     </p>
+                    {cat.startingRatePerKg != null && (
+                      <p className="text-[11px] font-black text-[#0A3D2B] mt-1.5">
+                        From ₹{Number(cat.startingRatePerKg).toFixed(2)}
+                        <span className="text-[9px] font-semibold text-slate-500">/kg</span>
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               );

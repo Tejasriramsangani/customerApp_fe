@@ -132,47 +132,34 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
 
     socket.on('connect', () => {
       // Join pickup room for live push events
-      socket.emit('join_pickup', { pickupId: currentPickupId });
+      // Must match the gateway's @SubscribeMessage('join_pickup_room').
+      socket.emit('join_pickup_room', { pickupId: currentPickupId });
     });
 
     // Listen for live status transitions
+    // The event payload is partial (no picker name, phone, totals...), so treat it as a signal and
+    // reload the pickup from the API, which is the source of truth.
     socket.on('pickup.status_changed', (payload: any) => {
-      if (payload?.status) {
-        setPickup((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            status: payload.status,
-            scheduledDate: payload.scheduledDate || prev.scheduledDate,
-          };
-        });
-        showToast(`Pickup status updated: ${payload.status}`);
-      }
+      const next = payload?.toStatus || payload?.status;
+      if (!next) return;
+      void fetchPickupDetails();
+      showToast(
+        payload?.action === 'RESCHEDULED'
+          ? 'Your pickup has been rescheduled'
+          : `Pickup status updated: ${String(next).replace(/_/g, ' ').toLowerCase()}`,
+      );
     });
 
     // Listen for live employee assignment
-    socket.on('pickup.assigned', (payload: any) => {
-      setPickup((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          status: 'ASSIGNED',
-          assignment: {
-            employeeName: payload?.employeeName || 'Unassigned',
-            employeeCode: payload?.employeeCode,
-            employeePhone: payload?.employeePhone,
-            vehicleType: payload?.vehicleType,
-            vehicleNumber: payload?.vehicleNumber,
-          },
-        };
-      });
+    socket.on('pickup.assigned', () => {
+      void fetchPickupDetails();
       showToast('An employee has been assigned to your pickup!');
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [currentPickupId]);
+  }, [currentPickupId, fetchPickupDetails]);
 
   // Sync initialPickup if it updates
   useEffect(() => {
