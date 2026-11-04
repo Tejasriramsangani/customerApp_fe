@@ -6,6 +6,7 @@ import { Scale, Crosshair, Search, MapPin, Truck, Trees } from 'lucide-react';
 import { useLocation, LocationData } from '../../context/LocationContext';
 import { LocationBottomSheetModal } from './LocationBottomSheetModal';
 import { BrandLogo } from '../common/BrandLogo';
+import { isCompleteBookingAddress } from '../../lib/booking-helpers';
 
 interface LocationPermissionScreenProps {
   onLocationConfirmed: (location: LocationData) => void;
@@ -17,15 +18,21 @@ export const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> =
   const { requestCurrentLocation } = useLocation();
   const [isManualSheetOpen, setIsManualSheetOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [sheetHint, setSheetHint] = useState('');
 
   const handleAllowLocation = async () => {
     setIsLocating(true);
     const detected = await requestCurrentLocation();
     setIsLocating(false);
-    if (detected) {
+    if (detected && isCompleteBookingAddress(detected)) {
       onLocationConfirmed(detected);
     } else {
-      // If permission is denied or unavailable, fall back to opening manual selection
+      // Permission denied, or GPS worked but no address could be worked out: pick the locality by hand.
+      setSheetHint(
+        detected
+          ? 'We found your position but could not work out the address. Please pick your locality.'
+          : '',
+      );
       setIsManualSheetOpen(true);
     }
   };
@@ -131,6 +138,7 @@ export const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> =
         isOpen={isManualSheetOpen}
         onClose={() => setIsManualSheetOpen(false)}
         onSelectLocation={handleManualSelection}
+        initialHint={sheetHint}
       />
     </div>
   );

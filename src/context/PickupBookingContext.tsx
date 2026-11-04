@@ -42,6 +42,8 @@ export interface BookingState {
   paymentPreference: 'CASH' | 'UPI' | 'DONATE';
   addressId?: string;
   remarks?: string;
+  /** Optional photos of the scrap (Cloudinary links), sent with the booking. */
+  photoUrls?: string[];
   confirmedPickup?: any;
 }
 
@@ -62,6 +64,7 @@ interface PickupBookingContextType {
   setAddressId: (addressId: string) => void;
   setPaymentPreference: (pref: 'CASH' | 'UPI' | 'DONATE') => void;
   setRemarks: (remarks: string) => void;
+  setPhotoUrls: (urls: string[]) => void;
   setConfirmedPickup: (pickup: any) => void;
   resetBooking: () => void;
 }
@@ -98,6 +101,7 @@ const initialState: BookingState = {
   selectedSlotId: '',
   paymentPreference: 'CASH',
   remarks: '',
+  photoUrls: [],
   confirmedPickup: null,
 };
 
@@ -293,6 +297,10 @@ export function PickupBookingProvider({ children }: { children: React.ReactNode 
     setState((prev) => ({ ...prev, remarks }));
   };
 
+  const setPhotoUrls = (photoUrls: string[]) => {
+    setState((prev) => ({ ...prev, photoUrls }));
+  };
+
   const setConfirmedPickup = (pickup: any) => {
     setState((prev) => ({ ...prev, confirmedPickup: pickup }));
   };
@@ -320,6 +328,7 @@ export function PickupBookingProvider({ children }: { children: React.ReactNode 
         setAddressId,
         setPaymentPreference,
         setRemarks,
+        setPhotoUrls,
         setConfirmedPickup,
         resetBooking,
       }}

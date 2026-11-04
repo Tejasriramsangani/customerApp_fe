@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     // Must run before clearTokens(): the request needs the access token.
     disablePush((token) => apiClient.request('/devices', { method: 'DELETE', body: JSON.stringify({ token }) }));
+    void apiClient.post('/auth/logout');
     apiClient.clearTokens();
     setAccessToken(null);
     setUser(null);

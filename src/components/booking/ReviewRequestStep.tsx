@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   MapPin,
@@ -15,13 +15,16 @@ import {
   Heart,
 } from 'lucide-react';
 import { usePickupBooking } from '../../context/PickupBookingContext';
-import { useLocation } from '../../context/LocationContext';
 import { apiClient, getApiErrorMessage } from '../../lib/api-client';
 import {
-  isCompleteBookingAddress,
-  isValidMongoId,
-  resolveSlotForRouteDay,
-} from '../../lib/booking-helpers';
+  SavedAddress,
+  addressIdOf,
+  addressLine,
+  addressTitle,
+  fetchSavedAddresses,
+} from '../../lib/address-helpers';
+import { isValidMongoId, resolveSlotForRouteDay } from '../../lib/booking-helpers';
+import { ScrapPhotoUploader } from './ScrapPhotoUploader';
 
 interface ReviewRequestStepProps {
   onBack: () => void;
@@ -41,11 +44,22 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
     timeSlots,
     setPaymentPreference,
     setRemarks,
-    setAddressId,
+    setPhotoUrls,
     setSlot,
   } = usePickupBooking();
-  const { location, openSheet } = useLocation();
+  const [address, setAddress] = useState<SavedAddress | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // The address chosen on the previous step, shown here so it can be checked before booking.
+  useEffect(() => {
+    let cancelled = false;
+    fetchSavedAddresses().then((list) => {
+      if (!cancelled) setAddress(list.find((a) => addressIdOf(a) === state.addressId) || null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [state.addressId]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedCategories = categories.filter((c) =>
@@ -73,47 +87,11 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
     setIsLoading(true);
     setErrorMessage(null);
 
-    if (!isCompleteBookingAddress(location)) {
-      setErrorMessage('Select a complete pickup address with a valid 6-digit pincode and GPS before booking.');
+    const finalAddressId = state.addressId || '';
+    if (!isValidMongoId(finalAddressId)) {
+      setErrorMessage('Choose a pickup address first: tap Edit on the address card.');
       setIsLoading(false);
       return;
-    }
-
-    let finalAddressId = state.addressId;
-    if (!isValidMongoId(finalAddressId)) {
-      try {
-        const addrRes = await apiClient.get<any[]>('/customer/addresses');
-        if (addrRes.success && Array.isArray(addrRes.data) && addrRes.data.length > 0) {
-          const match = addrRes.data.find(
-            (a: any) =>
-              String(a.pincode || '') === location.pincode ||
-              (Array.isArray(a.coordinates) &&
-                Math.abs(Number(a.coordinates[0]) - Number(location.longitude)) < 0.0005 &&
-                Math.abs(Number(a.coordinates[1]) - Number(location.latitude)) < 0.0005),
-          );
-          finalAddressId = (match || addrRes.data[0])._id || (match || addrRes.data[0]).id;
-        } else {
-          const createRes = await apiClient.post<any>('/customer/addresses', {
-            line1: location.formattedAddress,
-            city: location.city,
-            state: location.state,
-            pincode: location.pincode,
-            coordinates: [location.longitude, location.latitude],
-          });
-          if (createRes.success && createRes.data) {
-            finalAddressId = createRes.data._id || createRes.data.id;
-          } else {
-            setErrorMessage(getApiErrorMessage(createRes.error, 'Could not create the pickup address.'));
-            setIsLoading(false);
-            return;
-          }
-        }
-        if (isValidMongoId(finalAddressId)) setAddressId(finalAddressId!);
-      } catch (error) {
-        setErrorMessage(getApiErrorMessage(error, 'Could not load pickup addresses.'));
-        setIsLoading(false);
-        return;
-      }
     }
 
     let finalSlotId = state.selectedSlotId;
@@ -149,6 +127,7 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
       categoryIds: finalCategoryIds,
       settlementPreference: state.paymentPreference,
       remarks: state.remarks?.trim() || undefined,
+      photoUrls: state.photoUrls && state.photoUrls.length > 0 ? state.photoUrls : undefined,
     };
 
     try {
@@ -181,29 +160,41 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
         </div>
 
         <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex items-start justify-between">
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0A3D2B] flex items-center justify-center shrink-0 mt-0.5">
               <MapPin className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Pickup Location
+                Pickup Address
               </span>
-              <h4 className="text-xs font-black text-slate-900 mt-0.5">{location.areaName || '—'}</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                {location.formattedAddress || 'No address selected'}
-              </p>
-              {!isCompleteBookingAddress(location) && (
-                <p className="text-[10px] font-semibold text-amber-700 mt-1">
-                  Incomplete address — tap Edit to choose a covered locality.
+              {address ? (
+                <>
+                  <h4 className="text-xs font-black text-slate-900 mt-0.5 flex items-center gap-1.5">
+                    {addressTitle(address)}
+                    {address.isDefault && (
+                      <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                        Primary
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{addressLine(address)}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {address.city} - {address.pincode}
+                    {address.landmark ? ` · Near ${address.landmark}` : ''}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[11px] text-amber-700 font-semibold mt-0.5">
+                  No address chosen. Tap Edit to pick one.
                 </p>
               )}
             </div>
           </div>
           <button
             type="button"
-            onClick={openSheet}
-            className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 p-1"
+            onClick={() => onEditStep(3)}
+            className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 p-1 shrink-0"
           >
             <Edit2 className="w-3.5 h-3.5" />
             <span>Edit</span>
@@ -357,6 +348,9 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
             {(state.remarks || '').length}/300
           </p>
         </div>
+
+        {/* Optional photos of the scrap (hidden if the server has no photo storage) */}
+        <ScrapPhotoUploader urls={state.photoUrls || []} onChange={setPhotoUrls} />
 
         {errorMessage && (
           <p className="text-xs font-semibold text-rose-600 px-1">⚠️ {errorMessage}</p>

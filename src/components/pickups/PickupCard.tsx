@@ -26,6 +26,7 @@ export interface PickupItemData {
     endTime?: string;
   };
   addressSnapshot?: {
+    houseNumber?: string;
     line1?: string;
     city?: string;
     landmark?: string | null;
@@ -125,7 +126,7 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick, onInvoi
   const locationText =
     pickup.locationLabel ||
     (pickup.addressSnapshot
-      ? [pickup.addressSnapshot.line1, pickup.addressSnapshot.city].filter(Boolean).join(', ') || '—'
+      ? [pickup.addressSnapshot.houseNumber, pickup.addressSnapshot.line1, pickup.addressSnapshot.city].filter(Boolean).join(', ') || '—'
       : '—');
 
   const slotText = pickup.timeSlotSnapshot?.displayLabel || '—';

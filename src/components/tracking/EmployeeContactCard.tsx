@@ -13,9 +13,11 @@ export interface EmployeeInfo {
 
 interface EmployeeContactCardProps {
   employee?: EmployeeInfo | null;
+  /** No calling once the pickup is over. */
+  hideCall?: boolean;
 }
 
-export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employee }) => {
+export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employee, hideCall = false }) => {
   if (!employee) return null;
 
   const phone = employee.employeePhone;
@@ -60,7 +62,7 @@ export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employ
         </div>
 
         {/* Right: Direct Phone Dial Button */}
-        {phone && <a
+        {phone && !hideCall && <a
           href={`tel:${phone}`}
           className="w-11 h-11 rounded-full bg-[#0A3D2B] hover:bg-[#06291C] active:scale-95 text-white flex items-center justify-center shadow-sm transition-all cursor-pointer group"
           title={`Call ${name}`}

@@ -227,11 +227,32 @@ class ApiClient {
   public getAvailability<T = any>(addressId: string, weightRangeId: string) {
     return this.get<T>(`/availability?addressId=${encodeURIComponent(addressId)}&weightRangeId=${encodeURIComponent(weightRangeId)}`);
   }
+  /** GPS -> area / city / state / PIN. Public, so it works during onboarding before login. */
+  public reverseGeocode<T = any>(latitude: number, longitude: number) {
+    return this.get<T>(`/geo/reverse?lat=${latitude}&lng=${longitude}`);
+  }
+  /** Photo upload settings (and whether the server has photo storage set up). */
+  public getUploadConfig<T = any>() { return this.get<T>('/uploads/config'); }
+  /** Tile server settings for the map, decided by the backend .env. */
+  public getMapConfig<T = any>() { return this.get<T>('/geo/map-config'); }
+  /** Named places around a GPS point (temples, schools, banks...) to offer as the pickup landmark. */
+  public nearbyLandmarks<T = any>(latitude: number, longitude: number) {
+    return this.get<T>(`/geo/nearby?lat=${latitude}&lng=${longitude}`);
+  }
+  /** Address search ("benz circle", "520010"): places with coordinates, biased to the service area. */
+  public searchPlaces<T = any>(query: string) {
+    return this.get<T>(`/geo/search?q=${encodeURIComponent(query)}`);
+  }
+  /** Saves the customer's latest location on their profile. */
+  public saveMyLocation<T = any>(body: Record<string, unknown>) { return this.put<T>('/customer/location', body); }
   public getQr<T = any>(id: string) { return this.get<T>(`/customer/pickups/${id}/qr`); }
+  /** The completion code the picker asks for at the end (shown in the app, not sent by SMS). */
+  public getClosingCode<T = any>(id: string) { return this.get<T>(`/customer/pickups/${id}/closing-code`); }
   public getSummary<T = any>(id: string) { return this.get<T>(`/customer/pickups/${id}/summary`); }
   public approveSummary<T = any>(id: string, summaryHash: string) {
     return this.post<T>(`/customer/pickups/${id}/approve`, { summaryHash });
   }
+  /** Issues a brand-new completion code; the previous one stops working. */
   public resendClosingOtp<T = any>(id: string) {
     return this.post<T>(`/customer/pickups/${id}/resend-closing-otp`);
   }

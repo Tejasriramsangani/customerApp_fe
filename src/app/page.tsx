@@ -11,6 +11,7 @@ import { LocationBottomSheetModal } from '../components/location/LocationBottomS
 import { LoginScreen } from '../components/auth/LoginScreen';
 import { OtpVerificationScreen } from '../components/auth/OtpVerificationScreen';
 import { PersonalizationScreen } from '../components/auth/PersonalizationScreen';
+import { NearbyPickupBanner } from '../components/home/NearbyPickupBanner';
 import { HeroPromoCarousel } from '../components/home/HeroPromoCarousel';
 import { TodayScrapRatesPreview } from '../components/home/TodayScrapRatesPreview';
 import { OurApproachSection } from '../components/home/OurApproachSection';
@@ -65,8 +66,9 @@ function CustomerApp() {
   const { location, isSheetOpen, closeSheet, setLocation } = useLocation();
   const { user, logout, isLoading: isAuthLoading, isAuthenticated } = useAuth();
 
-  const loadCustomerPickups = React.useCallback(async () => {
-    setIsLoadingPickups(true);
+  // `silent` = background refresh: no loading spinner on the My Pickups tab.
+  const loadCustomerPickups = React.useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingPickups(true);
     try {
       const res = await apiClient.get('/customer/pickups');
       if (res.success && Array.isArray(res.data)) {
@@ -75,14 +77,37 @@ function CustomerApp() {
     } catch {
       // keep fallback
     } finally {
-      setIsLoadingPickups(false);
+      if (!silent) setIsLoadingPickups(false);
     }
   }, []);
+
+  // Keep the list fresh while the app is open, so the Home card appears the moment the executive arrives
+  // (alongside the push notification): once on opening, when the app comes back to the front, and every
+  // 15 seconds while a pickup is still open. No background polling when nothing is pending.
+  const myPickupsRef = React.useRef<any[]>([]);
+  myPickupsRef.current = myPickups;
+  useEffect(() => {
+    if (currentStep !== 'app' || !isAuthenticated) return;
+    const FINISHED = ['COMPLETED', 'CANCELLED', 'FAILED'];
+    void loadCustomerPickups(true);
+    const timer = window.setInterval(() => {
+      const pending = myPickupsRef.current.some((p) => !FINISHED.includes(p.status));
+      if (pending && document.visibilityState === 'visible') void loadCustomerPickups(true);
+    }, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void loadCustomerPickups(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [currentStep, isAuthenticated, loadCustomerPickups]);
 
   // Push notifications (native app only): refresh when one arrives while the app is open,
   // and open the pickup when the user taps one.
   useEffect(() => {
-    const onReceived = () => void loadCustomerPickups();
+    const onReceived = () => void loadCustomerPickups(true);
     window.addEventListener(PUSH_RECEIVED_EVENT, onReceived);
     const offOpen = onPushOpen(async (data) => {
       if (!data.pickupId) return;
@@ -286,6 +311,9 @@ function CustomerApp() {
                 </span>
               </div>
             )}
+
+            {/* Executive nearby / on the way / collecting: show the QR or open the pickup */}
+            <NearbyPickupBanner pickups={myPickups} onOpenDetails={(pickup) => setSelectedPickupForDetails(pickup)} />
 
             {/* 1. Hero Promo Banner Carousel (Screen 6) */}
             <HeroPromoCarousel

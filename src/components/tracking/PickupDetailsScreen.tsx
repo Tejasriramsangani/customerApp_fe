@@ -20,6 +20,7 @@ import { RescheduleModal } from './RescheduleModal';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { CancelPickupModal } from './CancelPickupModal';
 import { PickupQrCard } from './PickupQrCard';
+import { ClosingCodeCard } from './ClosingCodeCard';
 import { apiClient } from '../../lib/api-client';
 
 export interface PickupDetailData {
@@ -85,7 +86,8 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [summary, setSummary] = useState<any>(null);
-  const [isApproving, setIsApproving] = useState(false);
+  // The invoice of a completed pickup: what was weighed, what was paid and how.
+  const [invoice, setInvoice] = useState<any>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -148,6 +150,12 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           ? 'Your pickup has been rescheduled'
           : `Pickup status updated: ${String(next).replace(/_/g, ' ').toLowerCase()}`,
       );
+    });
+
+    // The executive entered the code: show the completed view straight away.
+    socket.on('pickup.completed', () => {
+      void fetchPickupDetails();
+      showToast('Pickup completed. Payment received. Thank you!');
     });
 
     // Listen for live employee assignment
@@ -274,32 +282,43 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
     'SETTLED', 'COMPLETED', 'CANCELLED', 'FAILED',
   ].includes(pickup.status));
 
+  // The weighing summary, from the moment it is ready until the pickup is completed. If the picker
+  // re-weighs, the summary hash changes and this loads the new amounts (and the card below, a new code).
+  const liveSummaryHash = (pickup as any)?.confirmation?.summaryHash as string | undefined;
   useEffect(() => {
     if (!pickup || !currentPickupId) return;
-    if (pickup.status === 'SUMMARY_READY') {
+    if (['SUMMARY_READY', 'CUSTOMER_CONFIRMED', 'PAYMENT_PENDING', 'SETTLED'].includes(String(pickup.status))) {
       apiClient.getSummary<any>(currentPickupId).then((res) => {
         if (res.success) setSummary(res.data);
       });
     }
-  }, [pickup?.status, currentPickupId]);
+  }, [pickup?.status, currentPickupId, liveSummaryHash]);
 
-  const handleApproveSummary = async () => {
-    if (!summary?.summaryHash) return;
-    setIsApproving(true);
-    const res = await apiClient.approveSummary(currentPickupId, summary.summaryHash);
-    setIsApproving(false);
-    if (res.success) {
-      showToast('Summary approved');
-      await fetchPickupDetails();
-    } else {
-      showToast('Could not approve summary');
+  const isCompleted = pickup?.status === 'COMPLETED';
+  useEffect(() => {
+    if (!isCompleted || !currentPickupId) return;
+    apiClient.get<any>(`/pickups/${currentPickupId}/invoice`).then((res) => {
+      if (res.success && res.data) setInvoice(res.data);
+    });
+  }, [isCompleted, currentPickupId]);
+
+  const formatRupees = (paise?: number) =>
+    `₹${((Number(paise) || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const paidType = String(invoice?.settlementDetails?.type || pickup?.settlementPreference || 'CASH');
+  const paidMethodLabel = paidType === 'UPI' ? 'UPI' : paidType === 'DONATE' ? 'Donated to NGO' : 'Cash';
+  // The customer sold the scrap, so for them the money is "received" (the picker is the one who paid).
+  const receivedLabel =
+    paidType === 'UPI' ? 'Received via UPI' : paidType === 'DONATE' ? 'Donated to NGO' : 'Received in cash';
+  const paidAmountPaise = invoice?.totalAmount ?? (pickup as any)?.totals?.totalAmount;
+  const completedAtLabel = (() => {
+    const at = (pickup as any)?.timestamps?.completedAt || invoice?.issuedAt;
+    if (!at) return '';
+    try {
+      return new Date(at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
     }
-  };
-
-  const handleResendClosingOtp = async () => {
-    const res = await apiClient.resendClosingOtp(currentPickupId);
-    showToast(res.success ? 'Closing OTP sent' : 'Could not resend closing OTP');
-  };
+  })();
 
   return (
     // Mobile: body scrolls (min-h-screen). Desktop: the root layout clips
@@ -368,15 +387,46 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
       ) : (
         <>
           <main className="flex-1 px-4 py-3 max-w-md mx-auto w-full">
-            {/* 1. Lifecycle 3-Step Stepper (Image 4) */}
-            <LifecycleStepper status={pickup.status} />
+            {isCompleted ? (
+              /* Done: a success header replaces the Placed / Scheduled / Employee Assigned tracker */
+              <div className="w-full rounded-3xl bg-gradient-to-br from-[#0A3D2B] via-[#0E4D36] to-[#062418] text-white p-5 mb-4 shadow-xl text-center relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-emerald-400/15 rounded-full blur-xl pointer-events-none" />
+                <div className="w-16 h-16 rounded-full bg-emerald-400/20 border-2 border-emerald-300 mx-auto flex items-center justify-center relative">
+                  <CheckCircle2 className="w-9 h-9 text-emerald-300" />
+                </div>
+                <h2 className="text-xl font-black mt-3 tracking-tight">Pickup completed</h2>
+                <p className="text-xs text-emerald-100/90 mt-1">
+                  Thank you! Your scrap was collected and you have received your payment.
+                </p>
+                {paidAmountPaise != null && (
+                  <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/10 border border-emerald-300/30">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">
+                      {receivedLabel}
+                    </span>
+                    <span className="text-lg font-black">{formatRupees(paidAmountPaise)}</span>
+                  </div>
+                )}
+                {(completedAtLabel || invoice?.invoiceNumber) && (
+                  <p className="text-[10px] text-emerald-200/80 mt-2.5">
+                    {[completedAtLabel, invoice?.invoiceNumber ? `Invoice ${invoice.invoiceNumber}` : '']
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* 1. Lifecycle 3-Step Stepper (Image 4) */}
+                <LifecycleStepper status={pickup.status} />
 
-            {/* 2. Status Notification Banner (Image 4) */}
-            <StatusNotificationBanner status={pickup.status} />
+                {/* 2. Status Notification Banner (Image 4) */}
+                <StatusNotificationBanner status={pickup.status} />
+              </>
+            )}
 
-        {/* 3. Assigned Employee Contact Card (Only in Screen 3 Assigned State) */}
+        {/* 3. Assigned Employee Contact Card (no call button once the pickup is over) */}
         {isAssigned && (
-          <EmployeeContactCard employee={pickup.assignment} />
+          <EmployeeContactCard employee={pickup.assignment} hideCall={isCompleted} />
         )}
 
         {/* Doorstep verification QR — show once employee is assigned / arriving */}
@@ -436,24 +486,34 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
             </div>
             <div>
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Payment Method
+                {isCompleted ? 'Payment' : 'Payment Method'}
               </p>
               <h4 className="text-xs font-black text-slate-900 mt-0.5">
-                {pickup.settlementPreference === 'UPI'
+                {isCompleted
+                  ? paidMethodLabel
+                  : pickup.settlementPreference === 'UPI'
                   ? 'Instant UPI'
                   : pickup.settlementPreference === 'DONATE'
                   ? 'Donate to NGO'
                   : 'Cash (Pay on pickup)'}
               </h4>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                Amount weighed on digital scale
+                {isCompleted
+                  ? `${formatRupees(paidAmountPaise)} received`
+                  : 'Amount weighed on digital scale'}
               </p>
             </div>
           </div>
 
-          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-full border border-emerald-200">
-            Guaranteed
-          </span>
+          {isCompleted ? (
+            <span className="text-[11px] font-black text-white bg-emerald-600 px-3 py-1 rounded-full inline-flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Received
+            </span>
+          ) : (
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-full border border-emerald-200">
+              Guaranteed
+            </span>
+          )}
         </div>
 
         {/* 7. Additional Information Card (Tools, Photos, Notes) */}
@@ -469,8 +529,28 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           onSavePreparation={handleSavePreparation}
         />
 
-        {pickup.status === 'SUMMARY_READY' && summary && (
+        {/* Final receipt of a completed pickup: what was weighed and paid */}
+        {isCompleted && invoice && (
           <div className="w-full bg-white rounded-2xl p-4 border border-emerald-200 mb-4 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-black text-slate-900">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" /> Weighing summary
+            </div>
+            {(invoice.lineItems || []).map((item: any, index: number) => (
+              <div key={item.productId || index} className="flex justify-between text-xs">
+                <span>{item.productName || 'Item'} · {(item.netWeightGrams || 0) / 1000} kg</span>
+                <strong>{formatRupees(item.amount)}</strong>
+              </div>
+            ))}
+            <div className="flex justify-between border-t pt-2 text-sm font-black">
+              <span>Total received</span>
+              <span className="text-emerald-700">{formatRupees(invoice.totalAmount)}</span>
+            </div>
+          </div>
+        )}
+
+        {['SUMMARY_READY', 'CUSTOMER_CONFIRMED', 'PAYMENT_PENDING', 'SETTLED'].includes(String(pickup.status)) && summary && (
+          <div className="mb-4 space-y-3">
+          <div className="w-full bg-white rounded-2xl p-4 border border-emerald-200 space-y-3">
             <div className="flex items-center gap-2 text-xs font-black text-slate-900">
               <CheckCircle2 className="w-4 h-4 text-emerald-700" /> Weighing summary
             </div>
@@ -483,20 +563,18 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
             <div className="flex justify-between border-t pt-2 text-sm font-black">
               <span>Total</span><span>₹{((summary.totals?.totalAmountPaise || 0) / 100).toFixed(2)}</span>
             </div>
-            <button onClick={handleApproveSummary} disabled={isApproving}
-              className="w-full py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold disabled:opacity-50">
-              {isApproving ? 'Approving...' : 'Approve summary'}
-            </button>
           </div>
-        )}
 
-        {pickup.status === 'SETTLED' && (
-          <button
-            onClick={handleResendClosingOtp}
-            className="w-full mb-4 py-3 rounded-2xl border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs font-bold"
-          >
-            Resend closing OTP
-          </button>
+          {/* No separate approve step: if you agree with the summary, sharing this code confirms it */}
+          {currentPickupId && (
+            <ClosingCodeCard
+              pickupId={currentPickupId}
+              pickupCode={pickup.pickupCode}
+              status={String(pickup.status)}
+              summaryHash={summary.summaryHash}
+            />
+          )}
+          </div>
         )}
 
         {/* 8. Cancel Pickup Request Action (Image 4) */}

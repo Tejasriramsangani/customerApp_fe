@@ -8,7 +8,6 @@ import {
   Loader2,
   Sparkles,
   AlertCircle,
-  MapPin,
   Sunrise,
   Sunset,
   Clock,
@@ -19,9 +18,10 @@ import {
 import { usePickupBooking, TimeSlotItem } from '../../context/PickupBookingContext';
 import { useLocation } from '../../context/LocationContext';
 import { apiClient } from '../../lib/api-client';
+import { addressIdOf, addressToLocation, SavedAddress } from '../../lib/address-helpers';
+import { PickupAddressSelector } from './PickupAddressSelector';
 import {
   buildNextSevenDates,
-  isCompleteBookingAddress,
   isValidMongoId,
   resolveSlotForRouteDay,
 } from '../../lib/booking-helpers';
@@ -56,7 +56,7 @@ const PERIODS: Array<{ key: TimeSlotItem['period']; label: string; hint: string;
 
 export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNext }) => {
   const { state, timeSlots, setDate, setSlot, setAddressId } = usePickupBooking();
-  const { location, openSheet } = useLocation();
+  const { location, setLocation } = useLocation();
 
   const [loading, setLoading] = useState(false);
   const [availabilityMode, setAvailabilityMode] = useState<'SLOTS' | 'ROUTE_DAYS'>('SLOTS');
@@ -69,7 +69,14 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
     Array<{ iso: string; label: string; dayNum: number; monthStr: string; weekday: string }>
   >([]);
 
-  const addressReady = isCompleteBookingAddress(location);
+  // The address chosen in the selector at the top of this step (primary by default).
+  const addressReady = isValidMongoId(state.addressId);
+
+  const handleSelectAddress = (address: SavedAddress) => {
+    setAddressId(addressIdOf(address));
+    // Keep the app-wide pickup location in step with the chosen address.
+    setLocation(addressToLocation(address));
+  };
 
   // Clock tick so "today" slots that have passed or are too close switch off while the screen is open.
   const [now, setNow] = useState(() => Date.now());
@@ -90,12 +97,6 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
 
   useEffect(() => setAvailableSlots(timeSlots), [timeSlots]);
 
-  // Invalidate cached address when the user changes locality (pincode / coords).
-  useEffect(() => {
-    setAddressId('');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pincode, location.latitude, location.longitude, location.formattedAddress]);
-
   useEffect(() => {
     let isMounted = true;
 
@@ -105,59 +106,23 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
       setOutOfCoverage(false);
 
       try {
+        // No address chosen yet: the selector above asks for one, so there is nothing to load.
         if (!addressReady) {
-          if (isMounted) {
-            setAvailabilityError(
-              'Select a complete pickup address (locality with 6-digit pincode and GPS) to check availability.',
-            );
-            setLoading(false);
-          }
+          if (isMounted) setLoading(false);
           return;
         }
 
-        let addressId = state.addressId;
-        if (!isValidMongoId(addressId)) {
-          try {
-            const addrRes = await apiClient.get<any[]>('/customer/addresses');
-            if (addrRes.success && Array.isArray(addrRes.data) && addrRes.data.length > 0) {
-              const match = addrRes.data.find(
-                (a: any) =>
-                  String(a.pincode || '') === location.pincode ||
-                  (Array.isArray(a.coordinates) &&
-                    Math.abs(Number(a.coordinates[0]) - Number(location.longitude)) < 0.0005 &&
-                    Math.abs(Number(a.coordinates[1]) - Number(location.latitude)) < 0.0005),
-              );
-              addressId = (match || addrRes.data[0])._id || (match || addrRes.data[0]).id;
-            } else {
-              const createRes = await apiClient.post<any>('/customer/addresses', {
-                line1: location.formattedAddress,
-                city: location.city,
-                state: location.state,
-                pincode: location.pincode,
-                coordinates: [location.longitude, location.latitude],
-              });
-              if (createRes.success) addressId = createRes.data?._id || createRes.data?.id;
-            }
-          } catch {
-            /* fall through */
-          }
-        }
-
+        const addressId = state.addressId as string;
         const weightRangeId = state.selectedWeightRangeId;
-        if (!isValidMongoId(addressId) || !weightRangeId) {
+        if (!weightRangeId) {
           if (isMounted) {
-            setAvailabilityError(
-              !weightRangeId
-                ? 'Select an estimated weight first.'
-                : 'Could not save pickup address. Please re-select your locality.',
-            );
+            setAvailabilityError('Select an estimated weight first.');
             setLoading(false);
           }
           return;
         }
-        setAddressId(addressId!);
 
-        const res = await apiClient.getAvailability<any>(addressId!, weightRangeId);
+        const res = await apiClient.getAvailability<any>(addressId, weightRangeId);
 
         if (!isMounted || !res.success || !res.data) {
           if (isMounted) setAvailabilityError('Could not load pickup availability.');
@@ -245,17 +210,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
     };
     // Intentionally omit selectedDate/slot to avoid re-fetch loops on selection
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    state.selectedWeightRangeId,
-    state.addressId,
-    location.formattedAddress,
-    location.city,
-    location.state,
-    location.pincode,
-    location.longitude,
-    location.latitude,
-    addressReady,
-  ]);
+  }, [state.selectedWeightRangeId, state.addressId, addressReady]);
 
   // Keep the selection valid: never leave a passed slot selected, and move to the next day when
   // nothing is left today. The customer picks the time themselves rather than us guessing one.
@@ -336,42 +291,22 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
           </p>
         </div>
 
-        {!addressReady && !loading && (
-          <div className="p-4 rounded-3xl bg-amber-50 border border-amber-200 space-y-3">
-            <div className="flex items-start gap-2.5">
-              <MapPin className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-bold text-amber-900">Pickup address incomplete</p>
-                <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                  Choose a covered locality with a valid 6-digit pincode so we can check collection days.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={openSheet}
-              className="w-full py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold"
-            >
-              Select pickup locality
-            </button>
-          </div>
-        )}
+        {/* Where to pick up from: saved addresses (primary selected), or add a new one */}
+        <PickupAddressSelector selectedId={state.addressId} onSelect={handleSelectAddress} />
 
-        {loading ? (
+        {!addressReady ? (
+          <p className="text-xs text-slate-400 text-center py-6">
+            Choose a pickup address above to see the available dates and time slots.
+          </p>
+        ) : loading ? (
           <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
             <Loader2 className="w-6 h-6 animate-spin text-[#0A3D2B]" />
             <span className="text-xs font-semibold">Loading available slots...</span>
           </div>
-        ) : availabilityError && addressReady ? (
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-3">
+        ) : availabilityError ? (
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
             <p className="text-xs text-rose-700">{availabilityError}</p>
-            <button
-              type="button"
-              onClick={openSheet}
-              className="text-xs font-bold text-rose-800 underline"
-            >
-              Update address
-            </button>
+            <p className="text-[11px] text-rose-600/80">Try another address above if this keeps happening.</p>
           </div>
         ) : availabilityMode === 'ROUTE_DAYS' ? (
           <div className="space-y-4 animate-in fade-in duration-200">

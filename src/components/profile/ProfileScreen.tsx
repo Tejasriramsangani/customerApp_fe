@@ -23,17 +23,16 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from '../../context/LocationContext';
 import { apiClient } from '../../lib/api-client';
-
-interface SavedAddress {
-  _id?: string;
-  id?: string;
-  line1: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark?: string | null;
-  isDefault?: boolean;
-}
+import { AddAddressForm } from './AddAddressForm';
+import {
+  MAX_SAVED_ADDRESSES,
+  SavedAddress,
+  addressIdOf,
+  addressLine,
+  addressTitle,
+  fetchSavedAddresses,
+  nextAddressLabel,
+} from '../../lib/address-helpers';
 
 interface ProfileScreenProps {
   onEditName: () => void;
@@ -55,8 +54,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   // Addresses state
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [newLine1, setNewLine1] = useState('');
-  const [newLandmark, setNewLandmark] = useState('');
 
   // Payment preference
   const [paymentPref, setPaymentPref] = useState<'CASH' | 'UPI'>('CASH');
@@ -83,36 +80,27 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     fetchAddresses();
   }, []);
 
-  const handleCreateAddress = async () => {
-    if (!newLine1.trim()) return;
-    const newAddr: SavedAddress = {
-      line1: newLine1.trim(),
-      city: location.city,
-      state: location.state || '',
-      pincode: location.pincode,
-      landmark: newLandmark.trim() || undefined,
-    };
+  // Reload from the server: primary flags and labels are decided there (a new address may become primary,
+  // deleting the primary promotes another).
+  const reloadAddresses = async () => setAddresses(await fetchSavedAddresses());
 
-    try {
-      const res = await apiClient.post('/customer/addresses', {
-        ...newAddr,
-        coordinates: [location.longitude, location.latitude],
-      });
-      if (res.success && res.data) {
-        setAddresses((prev) => [...prev, res.data]);
-      }
-    } catch {}
-
-    setNewLine1('');
-    setNewLandmark('');
+  const handleAddressSaved = async () => {
     setIsAddingAddress(false);
+    await reloadAddresses();
+  };
+
+  const makePrimary = async (addr: SavedAddress) => {
+    try {
+      await apiClient.put(`/customer/addresses/${addressIdOf(addr)}/primary`);
+    } catch {}
+    await reloadAddresses();
   };
 
   const handleDeleteAddress = async (id?: string) => {
     if (!id) return;
     try {
       const res = await apiClient.delete(`/customer/addresses/${id}`);
-      if (res.success) setAddresses((prev) => prev.filter((a) => (a._id || a.id) !== id));
+      if (res.success) await reloadAddresses();
     } catch {}
   };
 
@@ -302,13 +290,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   className="p-3 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-start justify-between gap-2"
                 >
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800">{addr.line1}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-black text-slate-900">{addressTitle(addr)}</span>
+                      {addr.isDefault && (
+                        <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                          Primary
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">{addressLine(addr)}</p>
                     {addr.landmark && (
                       <p className="text-[11px] text-slate-500">Landmark: {addr.landmark}</p>
                     )}
                     <p className="text-[11px] text-slate-400">
                       {addr.city}, {addr.state} - {addr.pincode}
                     </p>
+                    {!addr.isDefault && (
+                      <button
+                        type="button"
+                        onClick={() => makePrimary(addr)}
+                        className="text-[10px] font-bold text-emerald-800 hover:underline pt-1 cursor-pointer"
+                      >
+                        Make primary
+                      </button>
+                    )}
                   </div>
                   {addresses.length > 1 && (
                     <button
@@ -322,45 +327,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               ))}
 
               {isAddingAddress ? (
-                <div className="p-3 rounded-2xl border border-emerald-300 bg-emerald-50/40 space-y-2 mt-2">
-                  <h4 className="text-xs font-bold text-emerald-950">Add New Address</h4>
-                  <input
-                    type="text"
-                    value={newLine1}
-                    onChange={(e) => setNewLine1(e.target.value)}
-                    placeholder="House / Flat No, Street, Locality"
-                    className="w-full text-xs p-2 rounded-xl bg-white border border-slate-200"
-                  />
-                  <input
-                    type="text"
-                    value={newLandmark}
-                    onChange={(e) => setNewLandmark(e.target.value)}
-                    placeholder="Nearby Landmark (Optional)"
-                    className="w-full text-xs p-2 rounded-xl bg-white border border-slate-200"
-                  />
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={() => setIsAddingAddress(false)}
-                      className="flex-1 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-600"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleCreateAddress}
-                      className="flex-1 py-1.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold"
-                    >
-                      Save Address
-                    </button>
-                  </div>
-                </div>
-              ) : (
+                <AddAddressForm
+                  onSaved={handleAddressSaved}
+                  onCancel={() => setIsAddingAddress(false)}
+                  defaultLabel={nextAddressLabel(addresses)}
+                />
+              ) : addresses.length < MAX_SAVED_ADDRESSES ? (
                 <button
                   onClick={() => setIsAddingAddress(true)}
                   className="w-full py-2.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-600 text-xs font-bold text-slate-600 hover:text-emerald-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Another Address</span>
+                  <span>{addresses.length === 0 ? 'Add Address' : 'Add Another Address'}</span>
                 </button>
+              ) : (
+                <p className="text-[11px] text-slate-400 text-center py-1">
+                  You can save up to {MAX_SAVED_ADDRESSES} addresses. Delete one to add another.
+                </p>
               )}
             </div>
           </div>
