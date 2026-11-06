@@ -7,8 +7,12 @@
     "build": "next build --webpack",
     "start": "next start -p 3000",
     "lint": "eslint",
+    "android:add": "cap add android",
     "build:app": "cross-env CAPACITOR_BUILD=1 next build --webpack && cap sync android",
-    "android:open": "cap open android"
+    "android:sync": "cap sync android",
+    "android:open": "cap open android",
+    "android:run": "cap run android",
+    "setup:android": "npm run android:add && npm run build:app && npm run android:open"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

@@ -25,11 +25,11 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         <MapPin className="w-4 h-4 text-[#0A3D2B] shrink-0" />
         <div className="flex flex-col truncate">
           <span className="text-xs font-bold text-[#0A3D2B] truncate flex items-center gap-1">
-            {location.areaName}
+            {location.areaName || 'Select Location'}
             <ChevronDown className="w-3.5 h-3.5 text-emerald-800 shrink-0" />
           </span>
           <span className="text-[10px] text-slate-500 truncate -mt-0.5">
-            {location.city} {location.pincode && `• ${location.pincode}`}
+            {location.city ? `${location.city}${location.pincode ? ` • ${location.pincode}` : ''}` : 'Tap to set doorstep address'}
           </span>
         </div>
       </button>

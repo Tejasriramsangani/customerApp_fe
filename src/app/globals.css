@@ -28,14 +28,34 @@
     color: var(--text-primary);
     margin: 0;
     padding: 0;
-    font-family: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     user-select: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+  }
+
+  /* ─── Prevent iOS input zoom (font-size must be ≥ 16px for the OS to skip zoom) ─── */
+  input[type="text"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* ─── Android status-bar / notch compensation ─── */
+  html {
+    /* Fill above the status bar when running edge-to-edge */
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
 
-/* Custom Hide Scrollbar Utilities */
+/* ─── Custom Hide Scrollbar Utilities ─── */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -44,7 +64,7 @@
   scrollbar-width: none;
 }
 
-/* Glassmorphism & Elevation */
+/* ─── Glassmorphism & Elevation ─── */
 .glass-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -68,10 +88,34 @@
   box-shadow: 0 6px 20px -2px rgba(10, 61, 43, 0.4);
 }
 
-/* Mobile Safe Areas */
+/* ─── Mobile Safe Areas ─── */
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
 }
 .pt-safe {
-  padding-top: env(safe-area-inset-top, 16px);
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+}
+.mb-safe {
+  margin-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
+}
+
+/* ─── Prevent scroll-chaining on modals / bottom sheets ─── */
+.modal-scroll {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Smooth momentum scrolling on iOS ─── */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Focus ring for accessibility on interactive elements ─── */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #0A3D2B;
+  outline-offset: 2px;
 }

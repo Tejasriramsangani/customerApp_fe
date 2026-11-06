@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Config for ASLI KAATA Customer App
+  Allows plain HTTP traffic to the backend API server.
+
+  IMPORTANT: After running `cap add android`, copy this file to:
+  android/app/src/main/res/xml/network_security_config.xml
+
+  Then reference it in AndroidManifest.xml:
+  <application android:networkSecurityConfig="@xml/network_security_config" ...>
+-->
+<network-security-config>
+  <!-- Allow cleartext (HTTP) traffic to the backend API server -->
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="false">52.64.91.185</domain>
+  </domain-config>
+
+  <!-- All other traffic uses system defaults (HTTPS only) -->
+  <base-config cleartextTrafficPermitted="false">
+    <trust-anchors>
+      <certificates src="system" />
+    </trust-anchors>
+  </base-config>
+</network-security-config>
+

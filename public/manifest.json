@@ -1,0 +1,26 @@
+{
+  "name": "ASLI KAATA",
+  "short_name": "ASLI KAATA",
+  "description": "Doorstep scrap collection with digital precision weighing, instant payment, and live market rates.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A3D2B",
+  "theme_color": "#0A3D2B",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "shopping", "utilities"]
+}
+

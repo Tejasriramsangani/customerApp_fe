@@ -324,7 +324,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
     // Mobile: body scrolls (min-h-screen). Desktop: the root layout clips
     // children inside a fixed-height phone frame (overflow-hidden), so this
     // root must be the scroll container or the page cannot scroll at all.
-    <div className="w-full min-h-screen md:min-h-0 md:h-full md:overflow-y-auto no-scrollbar bg-[#F8FAFC] pb-10 flex flex-col">
+    <div className="w-full h-full min-h-screen overflow-y-auto no-scrollbar bg-[#F8FAFC] pb-safe flex flex-col">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-4 inset-x-4 z-50 flex justify-center pointer-events-none animate-in fade-in slide-in-from-top-4">
@@ -386,7 +386,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
         </div>
       ) : (
         <>
-          <main className="flex-1 px-4 py-3 max-w-md mx-auto w-full">
+          <main className="flex-1 px-4 py-3 pb-16 max-w-md mx-auto w-full">
             {isCompleted ? (
               /* Done: a success header replaces the Placed / Scheduled / Employee Assigned tracker */
               <div className="w-full rounded-3xl bg-gradient-to-br from-[#0A3D2B] via-[#0E4D36] to-[#062418] text-white p-5 mb-4 shadow-xl text-center relative overflow-hidden">

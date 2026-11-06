@@ -224,7 +224,7 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
         </div>
 
         {/* 6 Square Inputs */}
-        <div className="mt-8 flex items-center justify-center gap-2.5">
+        <div className="mt-8 flex items-center justify-center gap-1.5 sm:gap-2.5">
           {otp.map((digit, idx) => (
             <input
               key={idx}
@@ -238,7 +238,7 @@ export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
               onChange={(e) => handleChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(idx, e)}
               onPaste={handlePaste}
-              className={`w-12 h-14 text-center text-lg font-black rounded-2xl bg-white border-2 shadow-sm transition-all focus:outline-none ${
+              className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-lg font-black rounded-xl sm:rounded-2xl bg-white border-2 shadow-sm transition-all focus:outline-none ${
                 digit
                   ? 'border-[#0A3D2B] text-[#0A3D2B] bg-emerald-50/30 ring-2 ring-emerald-500/20'
                   : 'border-slate-200 text-slate-900 focus:border-[#0A3D2B]'

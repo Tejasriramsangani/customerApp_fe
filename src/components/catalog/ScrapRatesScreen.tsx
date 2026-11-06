@@ -97,7 +97,7 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
         <div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight">Scrap Rates</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Live doorstep rates in <span className="font-bold text-emerald-800">{areaName}</span>
+            Live doorstep rates in <span className="font-bold text-emerald-800">{areaName || 'Vijayawada'}</span>
           </p>
         </div>
         <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[10px] font-bold text-emerald-800">

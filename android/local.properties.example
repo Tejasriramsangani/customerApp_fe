@@ -1,0 +1,8 @@
+## local.properties
+## This file must *NOT* be checked into Version Control Systems,
+## as it contains information specific to your local configuration.
+##
+## Location of the Android SDK. This is normally set automatically by Android Studio.
+## Default path on Windows:
+sdk.dir=C\:\\Users\\suthr\\AppData\\Local\\Android\\Sdk
+

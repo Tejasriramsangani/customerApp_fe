@@ -302,7 +302,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         </div>
 
             {/* Bottom Actions */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/60 flex gap-2">
+            <div className="p-4 pb-safe border-t border-slate-100 bg-slate-50/60 flex gap-2">
               <button
                 onClick={handleShare}
                 className="flex-1 py-2.5 rounded-xl border border-slate-200 hover:bg-white text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"

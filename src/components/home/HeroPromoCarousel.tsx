@@ -21,7 +21,7 @@ export const HeroPromoCarousel: React.FC<HeroPromoCarouselProps> = ({
       id: 1,
       badge: "REAL WEIGHT. REAL VALUE.",
       headline: "Turn Your Scrap Into Real Value",
-      subtext: `Book certified doorstep scrap pickup in ${areaName} with live market rates.`,
+      subtext: `Book certified doorstep scrap pickup in ${areaName || 'Vijayawada'} with live market rates.`,
       cta: "Book a Pickup",
       icon: <Truck className="w-36 h-36 text-emerald-400 stroke-[1]" />,
     },
