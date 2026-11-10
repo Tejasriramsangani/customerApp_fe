@@ -10,6 +10,7 @@ export interface SavedAddress {
   _id?: string;
   id?: string;
   line1: string;
+  line2?: string;
   houseNumber?: string;
   label?: AddressLabel;
   labelName?: string;
@@ -32,7 +33,7 @@ export function addressTitle(address: SavedAddress): string {
 
 /** House / flat number first, then the address line: what a person reads out as "my address". */
 export function addressLine(address: SavedAddress): string {
-  return [address.houseNumber, address.line1].filter(Boolean).join(', ');
+  return [address.houseNumber, address.line2, address.line1].filter(Boolean).join(', ');
 }
 
 /** The name to suggest for the next address: Home, then Work, then Other. */
@@ -60,11 +61,12 @@ export function addressToLocation(address: SavedAddress): LocationData {
     city: address.city,
     state: address.state,
     pincode: address.pincode,
-    formattedAddress: address.line1,
+    formattedAddress: [address.line2, address.line1].filter(Boolean).join(', '),
     houseNumber: address.houseNumber || '',
     landmark: address.landmark || '',
     latitude: lat != null ? Number(lat) : undefined,
     longitude: lng != null ? Number(lng) : undefined,
     source: 'manual',
+    addressId: addressIdOf(address),
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, RefreshCw, AlertCircle } from 'lucide-react';
@@ -17,10 +18,10 @@ export const CategoryStep: React.FC<CategoryStepProps> = ({ onBack, onNext }) =>
   const isAnySelected = state.selectedCategoryIds.length > 0;
 
   return (
-    <div className="flex flex-col justify-between min-h-[calc(100vh-140px)]">
-      <div>
+    <div className="customer-booking-step flex flex-col justify-between ">
+      <div className="customer-booking-step-body">
         <div className="mb-5">
-          <h2 className="text-xl font-black text-slate-900 leading-tight">
+          <h2 className="text-2xl font-bold text-slate-900 leading-tight">
             What type of scrap do you have?
           </h2>
           <p className="text-xs text-slate-500 mt-1">
@@ -31,23 +32,23 @@ export const CategoryStep: React.FC<CategoryStepProps> = ({ onBack, onNext }) =>
         {isCatalogLoading && categories.length === 0 ? (
           <div className="py-16 flex flex-col items-center justify-center gap-3 text-slate-500">
             <RefreshCw className="w-6 h-6 animate-spin text-emerald-700" />
-            <p className="text-xs font-bold uppercase tracking-wider">Loading scrap categories…</p>
+            <p className="text-xs font-medium uppercase tracking-wider">Loading scrap categories…</p>
           </div>
         ) : categories.length === 0 ? (
           <div className="py-10 px-4 rounded-3xl border border-amber-200 bg-amber-50/80 text-center space-y-3">
             <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
-            <p className="text-sm font-bold text-slate-800">No scrap categories available</p>
+            <p className="text-sm font-medium text-slate-800">No scrap categories available</p>
             <p className="text-xs text-slate-500">
               {catalogError || 'Please retry or check that the catalog is seeded on the server.'}
             </p>
-            <button
+            <Button
               type="button"
               onClick={() => refreshCatalog()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand text-white text-xs font-bold"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Retry
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 pb-6">
@@ -60,7 +61,7 @@ export const CategoryStep: React.FC<CategoryStepProps> = ({ onBack, onNext }) =>
                   onClick={() => toggleCategory(cat.id)}
                   className={`p-4 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between relative shadow-xs ${
                     isSelected
-                      ? 'border-[#0A3D2B] bg-emerald-50/70 shadow-sm ring-1 ring-[#0A3D2B]'
+                      ? 'border-brand bg-emerald-50/70 shadow-sm ring-1 ring-brand'
                       : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}
                 >
@@ -69,7 +70,7 @@ export const CategoryStep: React.FC<CategoryStepProps> = ({ onBack, onNext }) =>
                     <div
                       className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
                         isSelected
-                          ? 'bg-[#0A3D2B] text-white'
+                          ? 'bg-brand text-white'
                           : 'border-2 border-slate-300 bg-white'
                       }`}
                     >
@@ -78,16 +79,16 @@ export const CategoryStep: React.FC<CategoryStepProps> = ({ onBack, onNext }) =>
                   </div>
 
                   <div>
-                    <h3 className={`text-sm font-extrabold ${isSelected ? 'text-[#0A3D2B]' : 'text-slate-900'}`}>
+                    <h3 className={`text-sm font-extrabold ${isSelected ? 'text-brand' : 'text-slate-900'}`}>
                       {cat.name}
                     </h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">
                       {cat.description}
                     </p>
                     {cat.startingRatePerKg != null && (
-                      <p className="text-[11px] font-black text-[#0A3D2B] mt-1.5">
+                      <p className="text-[11px] font-medium text-brand mt-1.5">
                         From ₹{Number(cat.startingRatePerKg).toFixed(2)}
-                        <span className="text-[9px] font-semibold text-slate-500">/kg</span>
+                        <span className="text-[11px] font-semibold text-slate-500">/kg</span>
                       </p>
                     )}
                   </div>
@@ -98,23 +99,23 @@ export const CategoryStep: React.FC<CategoryStepProps> = ({ onBack, onNext }) =>
         )}
       </div>
 
-      <div className="pt-4 border-t border-slate-200/80">
+      <div className="customer-booking-actions pt-4 border-t border-slate-200/80">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onNext}
           disabled={!isAnySelected}
           className={`w-full py-4 rounded-2xl font-bold text-sm shadow-xl flex items-center justify-center gap-2 transition-all ${
             isAnySelected
-              ? 'bg-[#0A3D2B] text-white shadow-emerald-950/20 hover:bg-[#0E4D36]'
+              ? 'bg-brand text-white  hover:bg-[var(--brand-hover)]'
               : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed'
           }`}
         >
           <span>Continue</span>
           <ArrowRight className="w-4 h-4 stroke-[2.5]" />
         </motion.button>
-        <button type="button" className="sr-only" onClick={onBack}>
+        <Button type="button" className="sr-only" onClick={onBack}>
           Back
-        </button>
+        </Button>
       </div>
     </div>
   );

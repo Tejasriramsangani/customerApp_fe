@@ -1,121 +1,59 @@
 @import "tailwindcss";
+@import "./design-system.css";
+
+.customer-preview {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: var(--customer-viewport-height, 100dvh);
+  overflow: hidden;
+}
+.customer-mobile-shell {
+  container-type: size;
+  container-name: customer-app;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  transform: translateZ(0);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.customer-screen { height: 100%; min-height: 0; flex: 1; }
+.customer-screen > header, .customer-screen > footer { flex-shrink: 0; }
+.customer-main { min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+.customer-bottom-nav { flex-shrink: 0; }
+.customer-auth-screen { display: flex; flex-direction: column; }
+.customer-auth-header, .customer-auth-actions { flex-shrink: 0; }
+.customer-auth-body { min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; justify-content: safe center; }
+.customer-auth-illustration { flex-shrink: 0; }
+.customer-booking-screen { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.customer-booking-content { min-height: 0; flex: 1; }
+.customer-booking-step { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.customer-booking-step-body { min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+.customer-booking-actions { flex-shrink: 0; }
+.customer-main[data-booking=true] { overflow: hidden; }
+.customer-modal-panel { min-height: 0; max-height: 90%; overflow-y: auto; }
+.customer-modal-panel .overflow-y-auto { min-height: 0; }
+.customer-rates-action { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+.customer-offline-content { overflow-y: auto; justify-content: safe center; }
+.customer-offline-content > * { flex-shrink: 0; }
+.customer-toast { top: calc(16px + env(safe-area-inset-top, 0px)); }
+
+@container customer-app (max-height: 740px) {
+  .customer-auth-screen { padding: 16px 20px; }
+  .customer-auth-body { padding-top: 8px; padding-bottom: 8px; }
+  .customer-auth-body > form { margin-top: 16px; }
+  .customer-auth-illustration { height: 120px; margin-bottom: 12px; }
+  .customer-auth-body > .customer-avatar { margin-bottom: 16px; }
+}
+@container customer-app (max-height: 550px) {
+  .customer-auth-screen { padding: 10px 16px; }
+  .customer-auth-body { justify-content: flex-start; }
+  .customer-auth-illustration { height: 76px; margin-bottom: 8px; }
+  .customer-auth-illustration > div { scale: .6; }
+  .customer-auth-body > form { margin-top: 12px; }
+}
 
 @layer base {
-  :root {
-    --brand-forest: #0A3D2B;
-    --brand-dark: #06281C;
-    --brand-hover: #0E4D36;
-    --brand-mint: #E8F5E9;
-    --brand-mint-subtle: #F0FDF4;
-    --accent-amber: #F59E0B;
-    --accent-amber-light: #FEF3C7;
-    --accent-amber-dark: #D97706;
-    --canvas-bg: #F8FAFC;
-    --card-surface: #FFFFFF;
-    --border-light: #E2E8F0;
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #94A3B8;
-  }
-
-  * {
-    -webkit-tap-highlight-color: transparent;
-    box-sizing: border-box;
-  }
-
-  body {
-    background-color: #0d281e;
-    color: var(--text-primary);
-    margin: 0;
-    padding: 0;
-    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    user-select: none;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* Prevent overscroll bounce on iOS */
-    overscroll-behavior: none;
-  }
-
-  /* ─── Prevent iOS input zoom (font-size must be ≥ 16px for the OS to skip zoom) ─── */
-  input[type="text"],
-  input[type="tel"],
-  input[type="number"],
-  input[type="email"],
-  input[type="password"],
-  input[type="search"],
-  textarea,
-  select {
-    font-size: 16px !important;
-  }
-
-  /* ─── Android status-bar / notch compensation ─── */
-  html {
-    /* Fill above the status bar when running edge-to-edge */
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-}
-
-/* ─── Custom Hide Scrollbar Utilities ─── */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* ─── Glassmorphism & Elevation ─── */
-.glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.shadow-soft {
-  box-shadow: 0 4px 20px -2px rgba(10, 61, 43, 0.08);
-}
-
-.shadow-elevation {
-  box-shadow: 0 10px 30px -4px rgba(10, 61, 43, 0.12), 0 4px 12px -2px rgba(10, 61, 43, 0.06);
-}
-
-.shadow-amber-glow {
-  box-shadow: 0 4px 16px -2px rgba(245, 158, 11, 0.35);
-}
-
-.shadow-emerald-glow {
-  box-shadow: 0 6px 20px -2px rgba(10, 61, 43, 0.4);
-}
-
-/* ─── Mobile Safe Areas ─── */
-.pb-safe {
-  padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
-}
-.pt-safe {
-  padding-top: max(env(safe-area-inset-top, 0px), 0px);
-}
-.mb-safe {
-  margin-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
-}
-
-/* ─── Prevent scroll-chaining on modals / bottom sheets ─── */
-.modal-scroll {
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ─── Smooth momentum scrolling on iOS ─── */
-.scroll-touch {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ─── Focus ring for accessibility on interactive elements ─── */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #0A3D2B;
-  outline-offset: 2px;
+  html, body { height: 100%; width: 100%; margin: 0; overflow: hidden; }
+  body { overscroll-behavior: none; }
 }

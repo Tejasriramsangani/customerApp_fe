@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { usePickupBooking } from '../../context/PickupBookingContext';
@@ -33,23 +34,23 @@ export const BookingWizardModal: React.FC<BookingWizardModalProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col min-h-full">
+    <div className="customer-booking-screen w-full">
       {/* Top Header Bar (Image 3 Header) */}
-      <div className="flex items-center justify-between py-2 mb-3 border-b border-slate-200/80">
+      <div className="flex items-center justify-between shrink-0 py-2 mb-3 border-b border-slate-200/80">
         {state.step < 5 ? (
-          <button
+          <Button
             onClick={handleBack}
             className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
             aria-label="Back"
           >
             <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
-          </button>
+          </Button>
         ) : (
           <div className="w-9" />
         )}
 
         <div className="text-center">
-          <h1 className="text-sm font-black text-slate-900 tracking-tight">
+          <h1 className="text-sm font-bold text-slate-900 tracking-tight">
             {state.step === 5 ? 'Pickup Details' : 'Request Pickup'}
           </h1>
           {state.step < 5 && (
@@ -59,7 +60,7 @@ export const BookingWizardModal: React.FC<BookingWizardModalProps> = ({
                   key={stepNum}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     stepNum === state.step
-                      ? 'w-6 bg-[#0A3D2B]'
+                      ? 'w-6 bg-brand'
                       : stepNum < state.step
                       ? 'w-3 bg-emerald-400'
                       : 'w-2 bg-slate-200'
@@ -70,17 +71,17 @@ export const BookingWizardModal: React.FC<BookingWizardModalProps> = ({
           )}
         </div>
 
-        <button
+        <Button
           onClick={state.step === 5 ? onGoToHome : onClose}
           className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
           aria-label="Close"
         >
           <X className="w-4 h-4 stroke-[2.5]" />
-        </button>
+        </Button>
       </div>
 
       {/* Step Render Area */}
-      <div className="flex-1">
+      <div className="customer-booking-content">
         {state.step === 1 && (
           <CategoryStep
             onBack={onClose}

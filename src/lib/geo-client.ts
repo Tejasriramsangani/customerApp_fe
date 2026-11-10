@@ -1,147 +1,145 @@
-import type { LocationData } from '../context/LocationContext';
-import { apiClient } from './api-client';
-import { distanceKm, nearestLocality } from './localities';
+import type { LocationData } from "../context/LocationContext";
+import { apiClient } from "./api-client";
+import { locateDevice, validCoordinates } from "./location-access";
+import { distanceKm } from "./localities";
+import { traceLocation } from './location-diagnostics';
 
-export interface MapConfig {
-  tileUrl: string;
-  attribution: string;
-  maxZoom: number;
+export const hasPincode = (loc: Partial<LocationData>) =>
+  /^\d{6}$/.test(loc.pincode || "");
+
+/** Backward-compatible GPS entry point, shared by existing consumers. */
+export async function getGpsPosition() {
+  const result = await locateDevice();
+  return result.position || null;
 }
 
-/** Used only when the backend cannot be reached: OpenStreetMap's free tiles. */
-const FALLBACK_MAP_CONFIG: MapConfig = {
-  tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  maxZoom: 19,
-};
-
-let mapConfigPromise: Promise<MapConfig> | null = null;
-
-/** Map tile settings from the backend (asked once, then remembered); never rejects. */
-export function loadMapConfig(): Promise<MapConfig> {
-  if (!mapConfigPromise) {
-    mapConfigPromise = apiClient
-      .getMapConfig<MapConfig>()
-      .then((res) => (res.success && res.data?.tileUrl ? res.data : null))
-      .catch(() => null)
-      .then((config) => {
-        if (!config) mapConfigPromise = null; // not reachable right now: ask again next time
-        return config || FALLBACK_MAP_CONFIG;
-      });
-  }
-  return mapConfigPromise;
-}
-
-export const hasPincode = (loc: Partial<LocationData>) => /^\d{6}$/.test(loc.pincode || '');
-
-/** A GPS fix this close to the last one is the same place (the old address still applies). */
-const SAME_PLACE_KM = 1;
-
-/** The phone's current GPS position, or null when it is denied / unavailable / times out. */
-export function getGpsPosition(): Promise<{ latitude: number; longitude: number } | null> {
-  return new Promise((resolve) => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      resolve(null);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
-  });
-}
-
-/**
- * Turns a GPS fix into a full address: area, city, state and PIN code. Asks the server to look the
- * coordinates up; if that is unavailable, falls back to the nearest known locality, and only as a last
- * resort keeps the bare coordinates (which the app then treats as an incomplete address).
- *
- * `prev` is the last known location: its other fields (house number, ...) are kept, and its address is
- * reused when the new fix is still the same place and the lookup is unavailable.
- */
+/** Only provider-resolved details are returned; valid coordinates survive lookup failures. */
 export async function resolveAddress(
   latitude: number,
   longitude: number,
   prev: Partial<LocationData> = {},
 ): Promise<LocationData> {
-  // House number and landmark belong to one doorstep: keep them while the customer is still at the same
-  // place (an app restart), drop them once the position has really moved.
-  const stillThere =
-    prev.latitude == null ||
-    prev.longitude == null ||
-    distanceKm(prev.latitude, prev.longitude, latitude, longitude) < SAME_PLACE_KM;
-  const base = {
-    areaName: '',
-    city: '',
-    state: '',
-    pincode: '',
-    formattedAddress: '',
-    ...prev,
-    houseNumber: stillThere ? prev.houseNumber : '',
-    landmark: stillThere ? prev.landmark : '',
-    latitude,
-    longitude,
-    source: 'gps' as const,
-  } satisfies LocationData;
-
-  let place: any = null;
-  try {
-    const res = await apiClient.reverseGeocode<any>(latitude, longitude);
-    if (res.success && res.data?.resolved) place = res.data;
-  } catch {
-    /* fall through to the fallbacks */
-  }
-
-  if (place) {
-    let pincode: string = place.pincode || '';
-    let formattedAddress: string = place.formattedAddress || '';
-    if (!pincode) {
-      // The lookup found the area but no PIN: borrow it from a known locality right next to it.
-      const near = nearestLocality(latitude, longitude, 5);
-      if (near) {
-        pincode = near.pincode;
-        formattedAddress = `${formattedAddress || near.areaName} - ${near.pincode}`;
-      }
-    }
-    return {
-      ...base,
-      areaName: place.areaName || place.city || 'Current location',
-      city: place.city || '',
-      state: place.state || '',
-      pincode,
-      formattedAddress: formattedAddress || `GPS Location (${latitude.toFixed(3)}, ${longitude.toFixed(3)})`,
-    };
-  }
-
-  // Still the same place as the last resolved address: keep that address, just refresh the coordinates.
-  if (
-    hasPincode(prev) &&
+  if (!validCoordinates(latitude, longitude))
+    throw new Error("Invalid location coordinates");
+  const sameDoorstep =
     prev.latitude != null &&
     prev.longitude != null &&
-    distanceKm(prev.latitude, prev.longitude, latitude, longitude) < SAME_PLACE_KM
-  ) {
-    return base;
-  }
-
-  const near = nearestLocality(latitude, longitude, 12);
-  if (near) {
-    return {
-      ...base,
-      areaName: near.areaName,
-      city: near.city,
-      state: near.state || '',
-      pincode: near.pincode,
-      formattedAddress: near.formattedAddress,
-    };
-  }
-
-  return {
-    ...base,
-    areaName: 'Current location',
-    city: '',
-    state: '',
-    pincode: '',
-    formattedAddress: `GPS Location (${latitude.toFixed(3)}, ${longitude.toFixed(3)})`,
+    distanceKm(prev.latitude, prev.longitude, latitude, longitude) <= 0.03;
+  const base: LocationData = {
+    areaName: "",
+    city: "",
+    state: "",
+    pincode: "",
+    formattedAddress: "",
+    latitude,
+    longitude,
+    source: "gps",
+    houseNumber: sameDoorstep ? prev.houseNumber : "",
+    landmark: sameDoorstep ? prev.landmark : "",
   };
+  try {
+    const res = await apiClient.reverseGeocode<
+      LocationData & { resolved: boolean }
+    >(latitude, longitude);
+    traceLocation('reverse.response', {
+      requested: { latitude, longitude }, success: res.success,
+      returned: { latitude: res.data?.latitude, longitude: res.data?.longitude },
+      resolved: res.data?.resolved, areaName: res.data?.areaName,
+    });
+    if (res.success && res.data?.resolved)
+      return { ...base, ...res.data, latitude, longitude };
+  } catch {
+    /* Preserve coordinates without inventing a locality or PIN. */
+  }
+  return base;
+}
+
+/** New Google map only: never fall back to the legacy suburb-only address. */
+export async function resolveGoogleAddress(latitude: number, longitude: number): Promise<LocationData> {
+  if (!validCoordinates(latitude, longitude)) throw new Error('Invalid location coordinates');
+  const res = await apiClient.googleReverseGeocode<LocationData & { resolved: boolean }>(latitude, longitude);
+  traceLocation('google-reverse.response', {
+    requested: { latitude, longitude }, success: res.success,
+    returned: { latitude: res.data?.latitude, longitude: res.data?.longitude },
+    resolved: res.data?.resolved, areaName: res.data?.areaName,
+  });
+  if (!res.success || !res.data?.resolved)
+    throw new Error('Google address lookup is unavailable. Please retry or search manually.');
+  return { ...res.data, latitude, longitude, source: 'gps', houseNumber: '', landmark: '' };
+}
+
+export interface SearchPlace {
+  placeId: string;
+  areaName: string;
+  label: string;
+}
+export function newSearchSession(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+export interface SearchConfig {
+  autocomplete: boolean;
+  minimumCharacters: number;
+  configured: boolean;
+}
+let searchConfig: Promise<SearchConfig> | null = null;
+export function loadSearchConfig(): Promise<SearchConfig> {
+  if (!searchConfig)
+    searchConfig = apiClient
+      .getSearchConfig<SearchConfig>()
+      .then((res) => {
+        if (!res.success) {
+          searchConfig = null;
+          throw new Error("Location search is unavailable");
+        }
+        return res.data;
+      })
+      .catch((error) => {
+        searchConfig = null;
+        throw error;
+      });
+  return searchConfig;
+}
+// Coalesce identical requests only while in flight; do not retain Google predictions across searches.
+const pending = new Map<string, Promise<SearchPlace[]>>();
+export function searchLocations(
+  query: string,
+  sessionToken: string,
+  bias?: { latitude: number; longitude: number },
+): Promise<SearchPlace[]> {
+  const text = query.trim().replace(/\s+/g, " ").slice(0, 120);
+  const key = JSON.stringify([text.toLowerCase(), sessionToken, bias]);
+  const current = pending.get(key);
+  if (current) return current;
+  const promise = apiClient
+    .searchPlaces<SearchPlace[]>(text, sessionToken, bias)
+    .then((res) => {
+      if (!res.success)
+        throw new Error("Location search is unavailable. Please retry.");
+      return Array.isArray(res.data) ? res.data : [];
+    })
+    .finally(() => pending.delete(key));
+  pending.set(key, promise);
+  return promise;
+}
+export async function resolveSearchPlace(
+  place: SearchPlace,
+  sessionToken: string,
+): Promise<LocationData> {
+  const res = await apiClient.placeDetails<
+    LocationData & { resolved: boolean }
+  >(place.placeId, sessionToken);
+  if (
+    !res.success ||
+    !res.data?.resolved ||
+    !validCoordinates(res.data.latitude!, res.data.longitude!)
+  )
+    throw new Error("Could not resolve this place. Try again.");
+  return res.data;
 }

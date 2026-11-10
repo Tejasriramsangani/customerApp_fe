@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Loader2, QrCode, RefreshCw, ShieldCheck } from 'lucide-react';
@@ -79,13 +80,13 @@ export const PickupQrCard: React.FC<PickupQrCardProps> = ({
     <div
       className={`w-full rounded-3xl border-2 p-4 space-y-3 ${
         emphasized
-          ? 'border-[#0A3D2B] bg-emerald-50/80 shadow-md ring-1 ring-[#0A3D2B]/20'
+          ? 'border-brand bg-emerald-50/80 shadow-md ring-1 ring-brand/20'
           : 'border-slate-200 bg-white'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="flex items-center gap-2 text-sm font-black text-slate-900">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
             <QrCode className="w-4 h-4 text-emerald-800" />
             Show this QR to the pickup executive
           </div>
@@ -93,7 +94,7 @@ export const PickupQrCard: React.FC<PickupQrCardProps> = ({
             When they arrive, ask them to scan this code to verify the pickup and start weighing.
           </p>
         </div>
-        <button
+        <Button aria-label="Refresh QR"
           type="button"
           onClick={loadQr}
           disabled={loading}
@@ -101,7 +102,7 @@ export const PickupQrCard: React.FC<PickupQrCardProps> = ({
           title="Refresh QR"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col items-center gap-3 py-2">
@@ -127,12 +128,12 @@ export const PickupQrCard: React.FC<PickupQrCardProps> = ({
               />
             </div>
             <div className="text-center space-y-1">
-              <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-200">
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-200">
                 <ShieldCheck className="w-3 h-3" />
                 Pickup {pickupCode}
               </div>
               {expiresLabel && (
-                <p className="text-[10px] text-slate-400 font-semibold">
+                <p className="text-[11px] text-slate-400 font-semibold">
                   Valid until {expiresLabel} · refresh for a new code
                 </p>
               )}

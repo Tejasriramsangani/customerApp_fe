@@ -1,8 +1,10 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useEffect, useRef, useState } from 'react';
 import { Landmark, Loader2 } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
+import { GoogleAttribution } from './GoogleAttribution';
 
 interface NearbyLandmark {
   name: string;
@@ -82,7 +84,7 @@ export const LandmarkPicker: React.FC<LandmarkPickerProps> = ({
         {label} <span className="font-medium normal-case text-slate-400">(optional)</span>
         {loading && <Loader2 className="w-3 h-3 animate-spin text-slate-400" />}
       </label>
-      <input
+      <input aria-label="e.g. Near Sri Venkateswara Temple"
         type="text"
         value={value}
         onChange={(e) => {
@@ -90,14 +92,15 @@ export const LandmarkPicker: React.FC<LandmarkPickerProps> = ({
           onChange(e.target.value.slice(0, 120));
         }}
         placeholder="e.g. Near Sri Venkateswara Temple"
-        className="w-full px-3.5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3D2B] focus:border-transparent transition-all"
+        className="w-full px-3.5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
       />
+      {items.length > 0 && <GoogleAttribution />}
       {items.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Landmarks near you">
           {items.map((item) => {
             const active = value.trim().toLowerCase() === item.name.toLowerCase();
             return (
-              <button
+              <Button
                 key={`${item.name}-${item.distanceMeters}`}
                 type="button"
                 onClick={() => {
@@ -106,7 +109,7 @@ export const LandmarkPicker: React.FC<LandmarkPickerProps> = ({
                 }}
                 className={`px-2.5 py-1 rounded-full border text-[11px] font-semibold text-left cursor-pointer transition-colors ${
                   active
-                    ? 'bg-[#0A3D2B] border-[#0A3D2B] text-white'
+                    ? 'bg-brand border-brand text-white'
                     : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400'
                 }`}
               >
@@ -116,7 +119,7 @@ export const LandmarkPicker: React.FC<LandmarkPickerProps> = ({
                   ({item.kind}
                   {distanceLabel(item.distanceMeters)})
                 </span>
-              </button>
+              </Button>
             );
           })}
         </div>

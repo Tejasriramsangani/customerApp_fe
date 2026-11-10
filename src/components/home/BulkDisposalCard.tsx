@@ -10,13 +10,13 @@ interface BulkDisposalCardProps {
 
 export const BulkDisposalCard: React.FC<BulkDisposalCardProps> = ({ onBookBulk }) => {
   return (
-    <div className="relative w-full rounded-3xl bg-gradient-to-r from-[#062418] via-[#0A3D2B] to-[#041D14] text-white p-5 shadow-lg border border-emerald-900/60 overflow-hidden">
+    <div className="relative w-full rounded-3xl bg-gradient-to-r from-[var(--brand-dark)] via-brand to-[var(--brand-dark)] text-white p-5 shadow-lg border border-emerald-900/60 overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
       <div className="relative z-10 max-w-[240px]">
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-[#F59E0B] text-[9px] font-black uppercase tracking-wider mb-2">
-          <Building2 className="w-3 h-3 text-[#F59E0B]" />
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-gold text-[11px] font-bold uppercase tracking-wider mb-2">
+          <Building2 className="w-3 h-3 text-gold" />
           Bulk & Commercial Disposal
         </span>
 
@@ -31,7 +31,7 @@ export const BulkDisposalCard: React.FC<BulkDisposalCardProps> = ({ onBookBulk }
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onBookBulk}
-          className="mt-3.5 px-4 py-2 rounded-xl bg-[#F59E0B] text-slate-950 text-xs font-black shadow-md shadow-amber-500/20 flex items-center gap-1.5 hover:brightness-105 transition-all"
+          className="mt-3.5 px-4 py-2 rounded-xl bg-gold text-slate-950 text-xs font-bold shadow-md  flex items-center gap-1.5 hover:brightness-105 transition-all"
         >
           <span>Book Bulk Pickup</span>
           <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />

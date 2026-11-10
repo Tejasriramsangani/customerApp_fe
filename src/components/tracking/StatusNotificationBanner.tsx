@@ -11,13 +11,13 @@ interface StatusNotificationBannerProps {
 export const StatusNotificationBanner: React.FC<StatusNotificationBannerProps> = ({ status }) => {
   if (status === 'SCHEDULED') {
     return (
-      <div className="w-full bg-[#FFFBEB] border border-amber-200/80 rounded-2xl p-4 mb-4 relative overflow-hidden shadow-xs">
+      <div className="w-full bg-cream border border-amber-200/80 rounded-2xl p-4 mb-4 relative overflow-hidden shadow-xs">
         <div className="flex items-start gap-3.5">
           <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 border border-amber-200">
             <CalendarCheck className="w-5 h-5 stroke-[2.2]" />
           </div>
           <div className="flex-1 pr-6">
-            <h3 className="text-xs font-black text-amber-950 uppercase tracking-wider mb-0.5">
+            <h3 className="text-lg font-bold text-amber-950 uppercase tracking-wider mb-0.5">
               Pickup Scheduled
             </h3>
             <p className="text-xs text-amber-900/90 font-medium leading-relaxed">
@@ -46,13 +46,13 @@ export const StatusNotificationBanner: React.FC<StatusNotificationBannerProps> =
     status === 'COMPLETED'
   ) {
     return (
-      <div className="w-full bg-[#ECFDF5] border border-emerald-200/80 rounded-2xl p-4 mb-4 relative overflow-hidden shadow-xs">
+      <div className="w-full bg-soft border border-emerald-200/80 rounded-2xl p-4 mb-4 relative overflow-hidden shadow-xs">
         <div className="flex items-start gap-3.5">
           <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200">
             <UserCheck className="w-5 h-5 stroke-[2.2]" />
           </div>
           <div className="flex-1 pr-6">
-            <h3 className="text-xs font-black text-emerald-950 uppercase tracking-wider mb-0.5">
+            <h3 className="text-lg font-bold text-emerald-950 uppercase tracking-wider mb-0.5">
               Employee Assigned
             </h3>
             <p className="text-xs text-emerald-900/90 font-medium leading-relaxed">
@@ -70,13 +70,13 @@ export const StatusNotificationBanner: React.FC<StatusNotificationBannerProps> =
 
   // Default: Placed State (REQUESTED)
   return (
-    <div className="w-full bg-[#ECFDF5] border border-emerald-200/80 rounded-2xl p-4 mb-4 relative overflow-hidden shadow-xs">
+    <div className="w-full bg-soft border border-emerald-200/80 rounded-2xl p-4 mb-4 relative overflow-hidden shadow-xs">
       <div className="flex items-start gap-3.5">
         <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-200">
           <Clock className="w-5 h-5 stroke-[2.2]" />
         </div>
         <div className="flex-1 pr-6">
-          <h3 className="text-xs font-black text-emerald-950 uppercase tracking-wider mb-0.5">
+          <h3 className="text-lg font-bold text-emerald-950 uppercase tracking-wider mb-0.5">
             Request Placed
           </h3>
           <p className="text-xs text-emerald-900/90 font-medium leading-relaxed">

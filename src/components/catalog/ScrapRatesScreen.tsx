@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Skeleton } from '../ui';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ArrowRight, Tag } from 'lucide-react';
@@ -95,56 +96,58 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
       {/* Title & Locality Info */}
       <div className="flex items-center justify-between px-1">
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">Scrap Rates</h2>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Scrap Rates</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Live doorstep rates in <span className="font-bold text-emerald-800">{areaName || 'Vijayawada'}</span>
           </p>
         </div>
-        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[10px] font-bold text-emerald-800">
+        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold text-emerald-800">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>Updated Today</span>
         </div>
       </div>
 
       {/* Search Bar */}
+      <label htmlFor="scrap-rate-search" className="block text-sm font-semibold text-copy">Find a material</label>
       <div className="relative">
         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
+        <input id="scrap-rate-search"
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search newspaper, iron, copper, plastic..."
-          className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3D2B] focus:border-transparent transition-all shadow-xs"
+          className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all shadow-xs"
         />
         {searchQuery && (
-          <button
+          <Button
             onClick={() => setSearchQuery('')}
             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
           >
             ✕
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Category Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
         {categoryPills.map((cat) => (
-          <button
+          <Button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
               selectedCategory === cat.id
-                ? 'bg-[#0A3D2B] text-white shadow-md shadow-emerald-950/20'
+                ? 'bg-brand text-white shadow-md '
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
             {cat.label}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Itemized Rates List */}
-      <div className="space-y-2.5">
+      <div className="grid grid-cols-1 gap-3" aria-busy={isLoading}>
+        {isLoading && <div role="status" aria-label="Loading scrap rates" className="col-span-full grid grid-cols-1 gap-3">{[0, 1, 2, 3].map(index => <Skeleton key={index} className="h-24" />)}</div>}
         {filteredRates.map((item) => (
           <motion.div
             key={item.id}
@@ -156,7 +159,7 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
                 {item.emoji}
               </div>
               <div>
-                <h4 className="text-xs font-extrabold text-slate-900 leading-tight">
+                <h4 className="text-base font-extrabold text-slate-900 leading-tight">
                   {item.name}
                 </h4>
                 <p className="text-[11px] text-slate-500 mt-0.5">{item.subLabel}</p>
@@ -164,30 +167,30 @@ export const ScrapRatesScreen: React.FC<ScrapRatesScreenProps> = ({
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-sm font-black text-[#0A3D2B] block">
+              <span className="data-value text-base text-brand block">
                 ₹{item.pricePerKg}
-                <span className="text-[10px] font-normal text-slate-500">/{item.unit}</span>
+                <span className="text-[11px] font-normal text-slate-500">/{item.unit}</span>
               </span>
-              <span className="text-[9px] text-slate-400">Trend —</span>
+              <span className="text-[11px] text-slate-400">Trend —</span>
             </div>
           </motion.div>
         ))}
 
-        {filteredRates.length === 0 && (
+        {!isLoading && filteredRates.length === 0 && (
           <div className="text-center py-10 text-slate-400 bg-white rounded-3xl border border-slate-100">
             <Tag className="w-8 h-8 mx-auto text-slate-300 mb-2" />
             <p className="text-xs font-semibold">No materials found for "{searchQuery}"</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Try searching for iron, paper or plastic</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Try searching for iron, paper or plastic</p>
           </div>
         )}
       </div>
 
       {/* Sticky Bottom Floating Booking CTA */}
-      <div className="fixed bottom-20 left-0 right-0 max-w-md mx-auto px-4 z-20 pointer-events-none">
+      <div className="customer-rates-action fixed left-0 right-0 max-w-[430px] mx-auto px-4 z-20 pointer-events-none">
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={onBookPickup}
-          className="w-full py-3.5 rounded-2xl bg-[#0A3D2B] text-white font-bold text-xs shadow-xl shadow-emerald-950/30 flex items-center justify-center gap-2 pointer-events-auto hover:bg-[#0E4D36] transition-all"
+          className="w-full py-3.5 rounded-2xl bg-brand text-white font-bold text-xs shadow-xl  flex items-center justify-center gap-2 pointer-events-auto hover:bg-[var(--brand-hover)] transition-all"
         >
           <span>Book A Scrap Pickup Now</span>
           <ArrowRight className="w-4 h-4 stroke-[2.5]" />

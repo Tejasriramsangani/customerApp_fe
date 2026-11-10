@@ -9,21 +9,21 @@ export const OurApproachSection: React.FC = () => {
       id: 1,
       title: "Doorstep Collection",
       desc: "Our trained executive arrives at your home or apartment at your scheduled time slot.",
-      icon: <Truck className="w-5 h-5 text-[#F59E0B]" />,
+      icon: <Truck className="w-5 h-5 text-gold" />,
       badge: "Step 1",
     },
     {
       id: 2,
       title: "Accurate Weighing",
       desc: "ISO certified Bluetooth digital weighing scales with real-time sync. Zero weight cuts.",
-      icon: <Scale className="w-5 h-5 text-[#F59E0B]" />,
+      icon: <Scale className="w-5 h-5 text-gold" />,
       badge: "Step 2",
     },
     {
       id: 3,
       title: "Instant Payment",
       desc: "Get instant cash in hand or immediate UPI transfer to your phone before we leave.",
-      icon: <Banknote className="w-5 h-5 text-[#F59E0B]" />,
+      icon: <Banknote className="w-5 h-5 text-gold" />,
       badge: "Step 3",
     },
   ];
@@ -31,10 +31,10 @@ export const OurApproachSection: React.FC = () => {
   return (
     <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-4">
       <div>
-        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
           The Asli Kaata Way
         </span>
-        <h3 className="text-sm font-extrabold text-slate-900 mt-1">
+        <h3 className="text-lg font-extrabold text-slate-900 mt-1">
           Our Approach — Simple. Transparent. Reliable.
         </h3>
       </div>
@@ -45,13 +45,13 @@ export const OurApproachSection: React.FC = () => {
             key={step.id}
             className="flex items-start gap-3.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-emerald-50/30 transition-colors"
           >
-            <div className="w-10 h-10 rounded-2xl bg-[#0A3D2B] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+            <div className="w-10 h-10 rounded-2xl bg-brand text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
               {step.icon}
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-900">{step.title}</h4>
-                <span className="text-[9px] font-bold text-slate-400">{step.badge}</span>
+                <h4 className="text-base font-bold text-slate-900">{step.title}</h4>
+                <span className="text-[11px] font-bold text-slate-400">{step.badge}</span>
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
                 {step.desc}

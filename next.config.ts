@@ -5,6 +5,8 @@ import type { NextConfig } from "next";
 const isCapacitorBuild = process.env.CAPACITOR_BUILD === "1";
 
 const nextConfig: NextConfig = {
+  ...(process.env.NODE_ENV === 'development' && process.env.ASLIKAATA_LOCAL_UI_PREVIEW_RUNTIME === '1'
+    ? { distDir: '.next-ui-preview' } : {}),
   ...(isCapacitorBuild
     ? {
         output: "export" as const,

@@ -1,0 +1,4 @@
+/* Capacitor 8's SystemBars plugin supplies these values on Android and uses
+   zero after native padding on older WebViews, avoiding duplicate insets. */
+.screen { padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)); }
+.bottom { padding-bottom: max(16px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }

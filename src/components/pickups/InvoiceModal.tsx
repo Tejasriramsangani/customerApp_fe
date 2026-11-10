@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, DialogSurface } from '../ui';
 import React, { useState, useEffect } from 'react';
 import {
   X,
@@ -134,8 +135,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-      <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/60  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+      <DialogSurface label="Tax Invoice & Scrap Receipt" onClose={onClose} className="customer-modal-panel bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col overflow-hidden">
         {/* Toast notification */}
         {toastMessage && (
           <div className="absolute top-4 inset-x-4 z-50 flex justify-center pointer-events-none animate-in fade-in">
@@ -150,21 +151,21 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="flex items-center gap-2.5">
             <BrandLogo variant="dark" size="sm" />
             <div>
-              <h3 className="text-xs font-black text-slate-900 tracking-tight">
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                 Tax Invoice & Scrap Receipt
               </h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">
                 {invoice?.invoiceNumber || '—'}
               </p>
             </div>
           </div>
 
-          <button
+          <Button aria-label="Close"
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4 stroke-[2.5]" />
-          </button>
+          </Button>
         </div>
 
         {isLoading ? (
@@ -177,7 +178,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
             <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mb-3 border border-emerald-100">
               <Scale className="w-7 h-7" />
             </div>
-            <h4 className="text-sm font-black text-slate-900 tracking-tight">Invoice Pending</h4>
+            <h4 className="text-base font-bold text-slate-900 tracking-tight">Invoice Pending</h4>
             <p className="text-xs text-slate-500 max-w-xs mt-1.5 leading-relaxed">
               Your itemized receipt and weight breakdown will appear here once the field executive completes doorstep weighing and OTP verification.
             </p>
@@ -191,7 +192,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 stroke-[2.5]" />
               <div>
-                <p className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                <p className="text-xs font-medium text-emerald-950 uppercase tracking-wider">
                   Payment Settled
                 </p>
                 <p className="text-[11px] text-emerald-800 font-medium">
@@ -201,7 +202,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 </p>
               </div>
             </div>
-            <span className="text-sm font-black text-emerald-700">
+            <span className="data-value text-sm font-bold text-emerald-700">
               ₹ {totalRupees}
             </span>
           </div>
@@ -209,13 +210,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           {/* Customer & Order Metadata */}
           <div className="grid grid-cols-2 gap-2 text-xs p-3 rounded-xl bg-slate-50 border border-slate-200/70">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Customer</p>
-              <p className="font-bold text-slate-800">{invoice?.customerName}</p>
+              <p className="text-[11px] font-medium text-slate-400 uppercase">Customer</p>
+              <p className="font-medium text-slate-800">{invoice?.customerName}</p>
               <p className="text-[11px] text-slate-500">{invoice?.customerPhone}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Pickup Details</p>
-              <p className="font-bold text-slate-800">{invoice?.pickupCode}</p>
+              <p className="text-[11px] font-medium text-slate-400 uppercase">Pickup Details</p>
+              <p className="data-value font-bold text-slate-800">{invoice?.pickupCode}</p>
               <p className="text-[11px] text-slate-500">{invoice?.date}</p>
             </div>
             <div className="col-span-2 pt-1 border-t border-slate-200/60 flex items-center gap-1.5 text-slate-600">
@@ -226,14 +227,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
           {/* Line Items Table */}
           <div>
-            <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Scale className="w-3.5 h-3.5 text-emerald-700" />
               Itemized Weight Breakdown
             </h4>
 
             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 text-slate-600 font-bold text-[10px] uppercase">
+                <thead className="bg-slate-100 text-slate-600 font-bold text-[11px] uppercase">
                   <tr>
                     <th className="py-2 px-3">Item</th>
                     <th className="py-2 px-2 text-right">Net Wt</th>
@@ -245,18 +246,18 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   {invoice?.items.map((item, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50">
                       <td className="py-2 px-3">
-                        <p className="font-bold text-slate-800">{item.productName}</p>
-                        <p className="text-[10px] text-slate-400">
+                        <p className="font-medium text-slate-800">{item.productName}</p>
+                        <p className="data-value text-[11px] text-slate-400">
                           Gross {item.grossWeightKg}kg • -{item.wastageKg}kg deduction
                         </p>
                       </td>
-                      <td className="py-2 px-2 text-right font-semibold text-slate-700">
+                      <td className="data-value py-2 px-2 text-right font-semibold text-slate-700">
                         {item.netWeightKg} kg
                       </td>
-                      <td className="py-2 px-2 text-right text-slate-500">
+                      <td className="data-value py-2 px-2 text-right text-slate-500">
                         ₹{item.ratePerKg}
                       </td>
-                      <td className="py-2 px-3 text-right font-black text-slate-900">
+                      <td className="data-value py-2 px-3 text-right font-bold text-slate-900">
                         ₹{item.amount.toFixed(2)}
                       </td>
                     </tr>
@@ -267,26 +268,26 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           </div>
 
           {/* Grand Totals Summary Card */}
-          <div className="bg-[#0A3D2B] text-white rounded-2xl p-4 space-y-2 shadow-sm">
+          <div className="bg-brand text-white rounded-2xl p-4 space-y-2 shadow-sm">
             <div className="flex items-center justify-between text-xs text-emerald-100/90 font-medium">
-              <span>Total Gross Weight</span>
+              <span className="data-value">Total Gross Weight</span>
               <span>{invoice?.totalGrossKg} kg</span>
             </div>
             <div className="flex items-center justify-between text-xs text-emerald-100/90 font-medium">
-              <span>Total Net Weight Weighed</span>
+              <span className="data-value">Total Net Weight Weighed</span>
               <span className="font-bold text-white">{invoice?.totalNetKg} kg</span>
             </div>
             <div className="pt-2 border-t border-emerald-600/60 flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-300">
                   Total Amount Paid to Customer
                 </p>
-                <p className="text-xl font-black tracking-tight text-white mt-0.5">
+                <p className="data-value text-xl font-bold tracking-tight text-white mt-0.5">
                   ₹ {totalRupees}
                 </p>
               </div>
               <div className="text-right">
-                <span className="inline-flex items-center gap-1 bg-emerald-800/80 text-emerald-200 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 bg-emerald-800/80 text-emerald-200 border border-emerald-500/30 text-[11px] font-bold px-2 py-0.5 rounded-full">
                   <ShieldCheck className="w-3 h-3 text-emerald-300" />
                   Digital Scale Verified
                 </span>
@@ -297,30 +298,30 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           {/* Executive Stamp */}
           <div className="flex items-center justify-between text-[11px] text-slate-500 px-1">
             <span>Collected by: <strong className="text-slate-800">{invoice?.executiveName}</strong> ({invoice?.executiveCode})</span>
-            <span className="text-[10px] text-slate-400">ASLI KAATA Vijayawada Hub</span>
+            <span className="text-[11px] text-slate-400">ASLI KAATA Vijayawada Hub</span>
           </div>
         </div>
 
             {/* Bottom Actions */}
             <div className="p-4 pb-safe border-t border-slate-100 bg-slate-50/60 flex gap-2">
-              <button
+              <Button
                 onClick={handleShare}
                 className="flex-1 py-2.5 rounded-xl border border-slate-200 hover:bg-white text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 Share
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleDownload}
-                className="flex-1 py-2.5 rounded-xl bg-[#0A3D2B] hover:bg-[#06291C] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-[var(--brand-dark)] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 Download Receipt
-              </button>
+              </Button>
             </div>
           </>
         )}
-      </div>
+      </DialogSurface>
     </div>
   );
 };

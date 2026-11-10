@@ -49,7 +49,7 @@ export const EmptyCancelledState: React.FC<EmptyCancelledStateProps> = ({
       </div>
 
       {/* Headings */}
-      <h3 className="text-sm font-black text-slate-900 tracking-tight mb-1">
+      <h3 className="text-lg font-bold text-slate-900 tracking-tight mb-1">
         {title}
       </h3>
       <p className="text-xs text-slate-500 max-w-xs font-medium leading-relaxed">

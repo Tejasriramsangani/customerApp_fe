@@ -9,7 +9,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v
 export interface ApiResponse<T = any> {
   success: boolean;
   data: T;
-  error?: { message?: string | string[] } | string | null;
+  error?: { message?: string | string[]; details?: { code?: string } | null } | string | null;
   timestamp: string;
 }
 
@@ -28,6 +28,15 @@ export const normalizeMobile = (mobile: string) => mobile.replace(/\D/g, '').sli
 type ServerStatusListener = (isDown: boolean, details?: string) => void;
 
 class ApiClient {
+  private preview?: (endpoint: string, options: RequestInit) => Promise<ApiResponse>;
+  public installUiPreview(transport: (endpoint: string, options: RequestInit) => Promise<ApiResponse>) {
+    if (process.env.NODE_ENV !== 'development' || typeof window === 'undefined' ||
+        window.location.origin !== 'http://127.0.0.1:3010' || window.location.pathname !== '/ui-preview') {
+      throw new Error('Preview requires the isolated local server.');
+    }
+    this.preview = transport;
+  }
+  public isUiPreview() { return !!this.preview; }
   private statusListeners: Set<ServerStatusListener> = new Set();
   public isServerDown: boolean = false;
   public lastErrorDetails: string = '';
@@ -46,6 +55,7 @@ class ApiClient {
   }
 
   public async checkHealth(): Promise<boolean> {
+    if (this.preview) return true;
     const rootUrl = BASE_URL.replace(/\/api\/v1\/?$/, '');
     try {
       const res = await fetch(`${rootUrl}/health`, { method: 'GET', cache: 'no-store' });
@@ -86,6 +96,7 @@ class ApiClient {
   }
 
   public clearTokens() {
+    if (this.preview) return;
     if (typeof window === 'undefined') return;
     localStorage.removeItem('aslikaata_customer_access_token');
     localStorage.removeItem('aslikaata_customer_refresh_token');
@@ -124,7 +135,9 @@ class ApiClient {
     options: RequestInit = {},
     isRetry = false
   ): Promise<ApiResponse<T>> {
+    if (this.preview) return this.preview(endpoint, options) as Promise<ApiResponse<T>>;
     const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const isLocationRequest = endpoint.startsWith('/geo/');
     
     const headers = new Headers(options.headers || {});
     if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
@@ -138,11 +151,17 @@ class ApiClient {
 
     try {
       const response = await fetch(url, { ...options, headers });
+      let data: ApiResponse<T> | null = null;
+      try { data = await response.json() as ApiResponse<T>; } catch { /* Gateway responses may not be JSON. */ }
+      // A reachable backend can return 503 when its OTP delivery provider fails.
+      // Keep that actionable error on the login form instead of declaring an outage.
+      const isOtpDeliveryFailure = response.status === 503 && data?.success === false &&
+        typeof data.error === 'object' && data.error?.details?.code === 'OTP_SMS_FAILED';
 
       // Handle 502, 503, 504 server down / maintenance errors
-      if (response.status >= 502 && response.status <= 504) {
+      if (!isLocationRequest && !isOtpDeliveryFailure && response.status >= 502 && response.status <= 504) {
         this.notifyStatus(true, `HTTP ${response.status}: Gateway or Service Maintenance`);
-      } else if (this.isServerDown && response.status < 500) {
+      } else if (this.isServerDown && (response.status < 500 || isOtpDeliveryFailure)) {
         this.notifyStatus(false);
       }
 
@@ -157,11 +176,10 @@ class ApiClient {
         this.clearTokens();
       }
 
-      try {
-        const data = (await response.json()) as ApiResponse<T>;
+      if (data) {
         if (!response.ok && data.success) data.success = false;
         return data;
-      } catch {
+      } else {
         return {
           success: false,
           data: null as T,
@@ -172,12 +190,12 @@ class ApiClient {
     } catch (err: any) {
       const errorMsg = err.message || 'Network request failed';
       // Flag server downtime on connection refusals or network failures
-      if (
+      if (!isLocationRequest && (
         errorMsg.includes('Failed to fetch') ||
         errorMsg.includes('NetworkError') ||
         errorMsg.includes('fetch failed') ||
         errorMsg.includes('Network request failed')
-      ) {
+      )) {
         this.notifyStatus(true, errorMsg);
       }
 
@@ -231,17 +249,27 @@ class ApiClient {
   public reverseGeocode<T = any>(latitude: number, longitude: number) {
     return this.get<T>(`/geo/reverse?lat=${latitude}&lng=${longitude}`);
   }
+  public googleReverseGeocode<T>(latitude: number, longitude: number) {
+    return this.get<T>(`/geo/google-reverse?lat=${latitude}&lng=${longitude}`);
+  }
   /** Photo upload settings (and whether the server has photo storage set up). */
   public getUploadConfig<T = any>() { return this.get<T>('/uploads/config'); }
   /** Tile server settings for the map, decided by the backend .env. */
   public getMapConfig<T = any>() { return this.get<T>('/geo/map-config'); }
+  public getSearchConfig<T = any>() { return this.get<T>('/geo/search-config'); }
   /** Named places around a GPS point (temples, schools, banks...) to offer as the pickup landmark. */
   public nearbyLandmarks<T = any>(latitude: number, longitude: number) {
     return this.get<T>(`/geo/nearby?lat=${latitude}&lng=${longitude}`);
   }
   /** Address search ("benz circle", "520010"): places with coordinates, biased to the service area. */
-  public searchPlaces<T = any>(query: string) {
-    return this.get<T>(`/geo/search?q=${encodeURIComponent(query)}`);
+  public searchPlaces<T = any>(query: string, sessionToken?: string, bias?: { latitude: number; longitude: number }) {
+    const params = new URLSearchParams({ q: query });
+    if (sessionToken) params.set('sessionToken', sessionToken);
+    if (bias) { params.set('lat', String(bias.latitude)); params.set('lng', String(bias.longitude)); }
+    return this.get<T>(`/geo/search?${params}`);
+  }
+  public placeDetails<T = any>(placeId: string, sessionToken: string) {
+    return this.get<T>(`/geo/place-details?${new URLSearchParams({ placeId, sessionToken })}`);
   }
   /** Saves the customer's latest location on their profile. */
   public saveMyLocation<T = any>(body: Record<string, unknown>) { return this.put<T>('/customer/location', body); }

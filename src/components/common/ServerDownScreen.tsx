@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useState, useEffect } from 'react';
 import { ServerOff, RefreshCw, WifiOff, PhoneCall, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
@@ -35,7 +36,7 @@ export const ServerDownScreen: React.FC<ServerDownScreenProps> = ({
   }, [countdown, isRetrying, onRetry, autoRetrySeconds]);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-[#0A3D2B] via-[#062419] to-[#03150e] text-white flex flex-col justify-between p-6 select-none overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-brand via-[var(--brand-dark)] to-[var(--brand-dark)] text-white flex flex-col justify-between p-6 select-none overflow-y-auto">
       {/* Background Ambient Glow Circles */}
       <div className="absolute top-1/4 -left-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -50,29 +51,29 @@ export const ServerDownScreen: React.FC<ServerDownScreenProps> = ({
       </div>
 
       {/* Center Animated Hero */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center my-6 max-w-sm mx-auto">
+      <div className="customer-offline-content relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center text-center my-6 max-w-sm mx-auto">
         {/* Animated Radar & Server Illustration */}
         <div className="relative w-36 h-36 mb-6 flex items-center justify-center">
           {/* Sonar Ripple Rings */}
           <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 animate-ping duration-1000" />
           <div className="absolute inset-3 rounded-full border border-teal-400/30 animate-pulse" />
-          <div className="absolute inset-6 rounded-full bg-emerald-950/60 backdrop-blur-md border border-emerald-500/30 shadow-2xl" />
+          <div className="absolute inset-6 rounded-full bg-emerald-950/60  border border-emerald-500/30 shadow-2xl" />
 
           {/* Central Disconnected Icon */}
           <div className="relative z-10 flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg ">
               <ServerOff className="w-8 h-8 text-slate-950 stroke-[2.2]" />
             </div>
           </div>
 
           {/* Floating Offline Badge */}
-          <div className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-red-500 border-2 border-[#0A3D2B] flex items-center justify-center text-white shadow-md animate-bounce">
+          <div className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-red-500 border-2 border-brand flex items-center justify-center text-white shadow-md animate-bounce">
             <WifiOff className="w-4 h-4" />
           </div>
         </div>
 
         {/* Status Typography */}
-        <h2 className="text-2xl font-black tracking-tight text-white mb-2">
+        <h2 className="text-2xl font-bold tracking-tight text-white mb-2">
           Server Under Maintenance
         </h2>
         <p className="text-sm text-emerald-100/80 leading-relaxed max-w-xs mb-4">
@@ -81,7 +82,7 @@ export const ServerDownScreen: React.FC<ServerDownScreenProps> = ({
         </p>
 
         {/* Auto Reconnect Status Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/60 border border-emerald-500/25 text-emerald-300 text-xs font-medium backdrop-blur-sm">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/60 border border-emerald-500/25 text-emerald-300 text-xs font-medium ">
           <RefreshCw className={`w-3.5 h-3.5 ${isRetrying ? 'animate-spin text-emerald-400' : ''}`} />
           <span>
             {isRetrying
@@ -92,25 +93,25 @@ export const ServerDownScreen: React.FC<ServerDownScreenProps> = ({
       </div>
 
       {/* Bottom Actions & Support Footer */}
-      <div className="relative z-10 space-y-3 max-w-sm mx-auto w-full pb-2">
+      <div className="relative z-10 shrink-0 space-y-3 max-w-sm mx-auto w-full pb-2">
         {/* Primary Manual Retry CTA */}
-        <button
+        <Button aria-label="Refresh"
           onClick={() => onRetry()}
           disabled={isRetrying}
-          className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 hover:brightness-105 active:scale-[0.98] text-slate-950 font-black text-sm tracking-wide shadow-xl shadow-emerald-500/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+          className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 hover:brightness-105 active:scale-[0.98] text-slate-950 font-bold text-sm tracking-wide shadow-xl  transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
         >
           <RefreshCw className={`w-4 h-4 stroke-[2.5] ${isRetrying ? 'animate-spin' : ''}`} />
           <span>{isRetrying ? 'Checking Server Status...' : 'Try Connecting Now'}</span>
-        </button>
+        </Button>
 
         {/* Technical Diagnostics Collapsible */}
         <div className="text-center pt-1">
-          <button
+          <Button
             onClick={() => setShowDiagnostics((prev) => !prev)}
             className="text-[11px] text-emerald-300/60 hover:text-emerald-300 underline transition cursor-pointer"
           >
             {showDiagnostics ? 'Hide Technical Details' : 'View Diagnostics'}
-          </button>
+          </Button>
 
           {showDiagnostics && (
             <div className="mt-2 p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400 text-left font-mono space-y-1">
@@ -120,7 +121,7 @@ export const ServerDownScreen: React.FC<ServerDownScreenProps> = ({
               </div>
               <p className="truncate">Status: Connection Failed (Cold Start or Down)</p>
               <p className="truncate">Target: {errorDetails}</p>
-              <p className="text-[10px] text-slate-500">Timestamp: {new Date().toLocaleTimeString()}</p>
+              <p className="text-[11px] text-slate-500">Timestamp: {new Date().toLocaleTimeString()}</p>
             </div>
           )}
         </div>

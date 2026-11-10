@@ -30,7 +30,7 @@ export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employ
         {/* Left: Avatar & Details */}
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-13 h-13 rounded-full bg-linear-to-br from-emerald-100 to-teal-50 border-2 border-emerald-300 flex items-center justify-center text-emerald-800 font-black text-base shadow-xs">
+            <div className="w-13 h-13 rounded-full bg-linear-to-br from-emerald-100 to-teal-50 border-2 border-emerald-300 flex items-center justify-center text-emerald-800 font-bold text-base shadow-xs">
               <span className="text-xl">🧢</span>
             </div>
             <div className="absolute -bottom-1 -right-1 bg-emerald-600 text-white rounded-full p-1 border-2 border-white shadow-xs">
@@ -40,10 +40,10 @@ export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employ
 
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-black text-slate-900 tracking-tight">
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                 {name}
               </h3>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                 Verified
               </span>
             </div>
@@ -64,7 +64,7 @@ export const EmployeeContactCard: React.FC<EmployeeContactCardProps> = ({ employ
         {/* Right: Direct Phone Dial Button */}
         {phone && !hideCall && <a
           href={`tel:${phone}`}
-          className="w-11 h-11 rounded-full bg-[#0A3D2B] hover:bg-[#06291C] active:scale-95 text-white flex items-center justify-center shadow-sm transition-all cursor-pointer group"
+          className="w-11 h-11 rounded-full bg-brand hover:bg-[var(--brand-dark)] active:scale-95 text-white flex items-center justify-center shadow-sm transition-all cursor-pointer group"
           title={`Call ${name}`}
           aria-label={`Call ${name}`}
         >

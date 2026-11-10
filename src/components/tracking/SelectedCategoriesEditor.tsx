@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, DialogSurface } from '../ui';
 import React, { useState } from 'react';
 import { LayoutGrid, Plus, X, Check } from 'lucide-react';
 import { usePickupBooking } from '../../context/PickupBookingContext';
@@ -83,19 +84,19 @@ export const SelectedCategoriesEditor: React.FC<SelectedCategoriesEditorProps> =
           <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center">
             <LayoutGrid className="w-4 h-4" />
           </div>
-          <h3 className="text-xs font-black text-slate-900 tracking-tight">
+          <h3 className="text-lg font-bold text-slate-900 tracking-tight">
             Selected Categories
           </h3>
         </div>
 
         {!isLocked && unselectedCategories.length > 0 && (
-          <button
+          <Button aria-label="Add"
             onClick={handleOpenAddModal}
             className="flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -110,14 +111,14 @@ export const SelectedCategoriesEditor: React.FC<SelectedCategoriesEditorProps> =
               <span className="text-sm">{cat.emoji}</span>
               <span>{cat.name}</span>
               {!isLocked && activeDisplayCategories.length > 1 && (
-                <button
+                <Button
                   onClick={() => handleRemoveCategory(cat.id)}
                   className="w-4 h-4 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 text-slate-500 flex items-center justify-center ml-0.5 transition-colors cursor-pointer"
                   title={`Remove ${cat.name}`}
                   aria-label={`Remove ${cat.name}`}
                 >
                   <X className="w-2.5 h-2.5 stroke-[2.5]" />
-                </button>
+                </Button>
               )}
             </div>
           ))
@@ -128,16 +129,16 @@ export const SelectedCategoriesEditor: React.FC<SelectedCategoriesEditorProps> =
 
       {/* Add Categories Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/50  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <DialogSurface onClose={() => setIsAddModalOpen(false)} label="Add Scrap Categories" className="customer-modal-panel bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h4 className="text-sm font-black text-slate-900">Add Scrap Categories</h4>
-              <button
+              <h4 className="text-base font-bold text-slate-900">Add Scrap Categories</h4>
+              <Button aria-label="Close"
                 onClick={() => setIsAddModalOpen(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <p className="text-xs text-slate-500 mt-2 mb-3">
@@ -148,52 +149,52 @@ export const SelectedCategoriesEditor: React.FC<SelectedCategoriesEditorProps> =
               {unselectedCategories.map((cat) => {
                 const isSelected = selectedToAdd.includes(cat.id);
                 return (
-                  <button
+                  <Button
                     key={cat.id}
                     onClick={() => handleToggleAdd(cat.id)}
                     className={`w-full flex items-center justify-between p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-[#0A3D2B] bg-emerald-50/60'
+                        ? 'border-brand bg-emerald-50/60'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{cat.emoji}</span>
                       <div>
-                        <p className="text-xs font-bold text-slate-900">{cat.name}</p>
+                        <p className="text-xs font-medium text-slate-900">{cat.name}</p>
                         <p className="text-[11px] text-slate-400">{cat.description}</p>
                       </div>
                     </div>
                     <div
                       className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                         isSelected
-                          ? 'bg-[#0A3D2B] border-[#0A3D2B] text-white'
+                          ? 'bg-brand border-brand text-white'
                           : 'border-slate-300'
                       }`}
                     >
                       {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                     </div>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex gap-2">
-              <button
+              <Button
                 onClick={() => setIsAddModalOpen(false)}
                 className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleConfirmAdd}
                 disabled={isSaving || selectedToAdd.length === 0}
-                className="flex-1 py-2.5 rounded-xl bg-[#0A3D2B] hover:bg-[#06291C] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-[var(--brand-dark)] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {isSaving ? 'Adding...' : `Add Selected (${selectedToAdd.length})`}
-              </button>
+              </Button>
             </div>
-          </div>
+          </DialogSurface>
         </div>
       )}
     </div>

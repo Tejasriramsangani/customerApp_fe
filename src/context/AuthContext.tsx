@@ -26,12 +26,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<CustomerUser | null>(null);
+export function AuthProvider({ children, previewUser }: { children: React.ReactNode; previewUser?: CustomerUser }) {
+  const isPreview = !!previewUser && apiClient.isUiPreview();
+  const [user, setUser] = useState<CustomerUser | null>(isPreview ? previewUser! : null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isPreview);
 
   useEffect(() => {
+    if (isPreview) return;
     let mounted = true;
     const restoreSession = async () => {
       const storedToken = localStorage.getItem('aslikaata_customer_access_token');
@@ -66,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted) setIsLoading(false);
     });
     return () => { mounted = false; };
-  }, []);
+  }, [isPreview]);
 
   // Register this phone for push once the user is signed in (restored session or fresh login).
   // No-op in a normal browser.
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, accessToken]);
 
   const login = (newAccessToken: string, newRefreshToken: string, newUser: CustomerUser) => {
+    if (isPreview) throw new Error('UI preview does not authenticate customers.');
     localStorage.setItem('aslikaata_customer_access_token', newAccessToken);
     localStorage.setItem('aslikaata_customer_refresh_token', newRefreshToken);
     localStorage.setItem('aslikaata_customer_profile', JSON.stringify(newUser));
@@ -86,11 +89,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUser = (partial: Partial<CustomerUser>) => {
     if (!user) return;
     const updated = { ...user, ...partial };
-    localStorage.setItem('aslikaata_customer_profile', JSON.stringify(updated));
+    if (!isPreview) localStorage.setItem('aslikaata_customer_profile', JSON.stringify(updated));
     setUser(updated);
   };
 
   const logout = () => {
+    if (isPreview) { setUser(null); return; }
     // Must run before clearTokens(): the request needs the access token.
     disablePush((token) => apiClient.request('/devices', { method: 'DELETE', body: JSON.stringify({ token }) }));
     void apiClient.post('/auth/logout');

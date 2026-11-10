@@ -1,7 +1,8 @@
 "use client";
 
+import { Button, StatusBadge } from '../ui';
 import React from 'react';
-import { Clock, MapPin, ChevronRight, User, Check, X, Calendar } from 'lucide-react';
+import { Clock, MapPin, ChevronRight } from 'lucide-react';
 
 export interface PickupItemData {
   _id?: string;
@@ -71,56 +72,13 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick, onInvoi
   const isCancelled = pickup.status === 'CANCELLED' || pickup.status === 'FAILED';
   const isCompleted = pickup.status === 'COMPLETED' || pickup.status === 'SETTLED';
 
-  // Render status badge matching Image 5
   const renderStatusBadge = () => {
-    switch (pickup.status) {
-      case 'ASSIGNED':
-      case 'ON_THE_WAY':
-      case 'ARRIVED':
-      case 'IN_PROGRESS':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
-            <User className="w-3 h-3 stroke-[2.5]" />
-            <span>Employee Assigned</span>
-          </span>
-        );
-      case 'SCHEDULED':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
-            <Calendar className="w-3 h-3 stroke-[2.5]" />
-            <span>Scheduled</span>
-          </span>
-        );
-      case 'REQUESTED':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-            <Clock className="w-3 h-3 stroke-[2.5]" />
-            <span>Requested</span>
-          </span>
-        );
-      case 'COMPLETED':
-      case 'SETTLED':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
-            <Check className="w-3 h-3 stroke-[3]" />
-            <span>Completed</span>
-          </span>
-        );
-      case 'CANCELLED':
-      case 'FAILED':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF1F2] text-[#BE123C] border border-[#FECDD3]">
-            <X className="w-3 h-3 stroke-[3]" />
-            <span>Cancelled</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-            {pickup.status}
-          </span>
-        );
-    }
+    const labels: Record<string, string> = {
+      REQUESTED: 'Requested', SCHEDULED: 'Scheduled', ASSIGNED: 'Employee assigned',
+      ON_THE_WAY: 'On the way', ARRIVED: 'Arrived', IN_PROGRESS: 'In progress',
+      COMPLETED: 'Completed', SETTLED: 'Completed', CANCELLED: 'Cancelled', FAILED: 'Failed',
+    };
+    return <StatusBadge status={pickup.status}>{labels[pickup.status] ?? pickup.status}</StatusBadge>;
   };
 
   const locationText =
@@ -132,28 +90,27 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick, onInvoi
   const slotText = pickup.timeSlotSnapshot?.displayLabel || '—';
 
   return (
-    <div
-      onClick={onClick}
-      className="w-full bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all active:scale-[0.99] cursor-pointer flex items-center justify-between gap-3 group"
+    <article
+      className="relative w-full bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all active:scale-[0.99] cursor-pointer flex items-center justify-between gap-3 group"
     >
       {/* Left Date Badge (Image 5) */}
       <div
         className={`w-16 h-18 rounded-xl flex flex-col items-center justify-center shrink-0 border transition-colors ${
           isCancelled
             ? 'bg-[#FFF1F2] border-[#FFE4E6] text-[#BE123C]'
-            : 'bg-[#F0FDF4] border-[#DCFCE7] text-[#0A3D2B]'
+            : 'bg-canvas border-soft text-brand'
         }`}
       >
-        <span className="text-xl font-black leading-none mb-0.5">{day}</span>
-        <span className="text-[10px] font-bold opacity-80 leading-tight">{monthYear}</span>
-        <span className="text-[10px] font-semibold opacity-70 leading-tight">{weekday}</span>
+        <span className="text-xl font-bold leading-none mb-0.5">{day}</span>
+        <span className="text-[11px] font-bold opacity-80 leading-tight">{monthYear}</span>
+        <span className="text-[11px] font-semibold opacity-70 leading-tight">{weekday}</span>
       </div>
 
       {/* Middle Content */}
       <div className="flex-1 min-w-0 pr-1">
         <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
-          <h3 className="text-sm font-black text-slate-900 tracking-tight truncate">
-            {pickup.pickupCode}
+          <h3 className="text-lg font-bold text-slate-900 tracking-tight truncate">
+            <span className="data-value">{pickup.pickupCode}</span>
           </h3>
           {renderStatusBadge()}
         </div>
@@ -164,12 +121,12 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick, onInvoi
             <span className="truncate">{slotText}</span>
           </div>
           {isCompleted && onInvoice && (
-            <button
+            <Button
               onClick={(event) => { event.stopPropagation(); onInvoice(); }}
-              className="text-[11px] font-bold text-emerald-800 underline"
+              className="relative z-10 text-[11px] font-bold text-emerald-800 underline"
             >
               View invoice
-            </button>
+            </Button>
           )}
 
           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
@@ -183,6 +140,7 @@ export const PickupCard: React.FC<PickupCardProps> = ({ pickup, onClick, onInvoi
       <div className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all shrink-0">
         <ChevronRight className="w-5 h-5 stroke-[2.2]" />
       </div>
-    </div>
+      <Button onClick={onClick} aria-label={`View pickup ${pickup.pickupCode}`} className="absolute inset-0 w-full rounded-2xl" />
+    </article>
   );
 };

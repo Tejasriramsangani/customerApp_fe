@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { MotionPreferences } from "../components/ui/MotionPreferences";
+import { MobileViewport } from "../components/layout/MobileViewport";
 
 export const metadata: Metadata = {
   title: "ASLI KAATA - Real Weight. Real Value.",
@@ -19,11 +21,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  minimumScale: 1,
-  userScalable: false,
   viewportFit: "cover",         // Respect notch / edge-to-edge on iOS & Android
-  themeColor: "#0A3D2B",
+  interactiveWidget: "resizes-content",
+  themeColor: "#1B5E3A",
 };
 
 export default function RootLayout({
@@ -33,28 +33,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <head>
-        {/* Plus Jakarta Sans — loaded via CDN link; falls back to system font if offline.
-            Using a plain <link> tag avoids the next/font build-time network dependency. */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-full bg-slate-950 text-slate-900 antialiased selection:bg-emerald-600 selection:text-white">
+      {/* Browser extensions can add body attributes before React hydrates (e.g. ColorZilla). */}
+      <body suppressHydrationWarning className="min-h-full bg-slate-950 text-slate-900 antialiased selection:bg-emerald-600 selection:text-white">
+        <MotionPreferences>
+        <MobileViewport />
         {/*
-          Responsive Container:
-          • On a real Android/iOS device (Capacitor): fills the full screen, no frame.
-          • On a desktop browser: centred luxury phone-frame for demo / testing.
+          Keep the customer experience phone-sized, including in desktop browsers.
         */}
-        <div className="min-h-screen w-full bg-gradient-to-br from-[#041A12] via-[#0A3D2B] to-[#062418] flex items-center justify-center p-0 md:py-8 md:px-4">
-          <div className="w-full max-w-md min-h-screen md:min-h-[860px] md:max-h-[920px] md:h-[88vh] md:rounded-[40px] bg-[#F8FAFC] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] relative overflow-hidden flex flex-col md:border-[7px] md:border-slate-800/90">
+        <div className="customer-preview w-full bg-canvas flex items-start justify-center p-0">
+          <div id="customer-mobile-shell" className="customer-mobile-shell w-full max-w-[430px] bg-canvas shadow-lg relative flex flex-col">
             {children}
           </div>
         </div>
+              </MotionPreferences>
       </body>
     </html>
   );

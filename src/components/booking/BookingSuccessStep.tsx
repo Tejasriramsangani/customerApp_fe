@@ -69,8 +69,8 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
   };
 
   return (
-    <div className="flex flex-col justify-between min-h-[calc(100vh-140px)] pb-2 animate-in fade-in duration-300">
-      <div className="space-y-5">
+    <div className="customer-booking-step flex flex-col justify-between  pb-2 animate-in fade-in duration-300">
+      <div className="customer-booking-step-body space-y-5">
         {/* Top Celebratory Hero (Image 3 Screen 5) */}
         <div className="relative pt-4 pb-2 flex flex-col items-center text-center">
           {/* Glowing Checkmark Badge with Confetti Sparkles */}
@@ -79,9 +79,9 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
               initial={{ scale: 0, rotate: -45 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="w-20 h-20 rounded-full bg-[#0A3D2B] text-white flex items-center justify-center shadow-xl shadow-emerald-950/25 border-4 border-emerald-100 relative z-10"
+              className="w-20 h-20 rounded-full bg-brand text-white flex items-center justify-center shadow-xl  border-4 border-emerald-100 relative z-10"
             >
-              <Check className="w-10 h-10 stroke-[3.5] text-[#22C55E]" />
+              <Check className="w-10 h-10 stroke-[3.5] text-brand" />
             </motion.div>
 
             {/* Radiant pulse rings */}
@@ -126,10 +126,10 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
             <div className="relative z-10 flex items-center">
               <div className="flex items-center">
                 {/* Truck Cargo Box */}
-                <div className="w-28 h-16 bg-[#0A3D2B] rounded-l-xl rounded-tr-sm p-1.5 flex flex-col justify-between border-y-2 border-l-2 border-emerald-700 shadow-md relative">
+                <div className="w-28 h-16 bg-brand rounded-l-xl rounded-tr-sm p-1.5 flex flex-col justify-between border-y-2 border-l-2 border-emerald-700 shadow-md relative">
                   <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-black tracking-widest text-[#F59E0B] uppercase">ASLI KAATA</span>
-                    <span className="text-[10px]">♻️</span>
+                    <span className="text-[11px] font-bold tracking-widest text-gold uppercase">ASLI KAATA</span>
+                    <span className="text-[11px]">♻️</span>
                   </div>
                   <div className="text-[7px] text-emerald-200 font-semibold leading-tight">
                     DOORSTEP SCRAP
@@ -161,7 +161,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
             transition={{ delay: 0.2 }}
             className="mt-2"
           >
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
               Pickup successfully requested!
             </h2>
             <p className="text-xs text-slate-500 mt-1 max-w-[290px] mx-auto leading-relaxed">
@@ -178,11 +178,11 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
           className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-3"
         >
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-emerald-800" />
               Request Summary
             </h3>
-            <span className="text-[11px] font-black text-[#0A3D2B] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span className="data-value text-[11px] font-bold text-brand bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               #{pickupCode}
             </span>
           </div>
@@ -193,7 +193,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
               <Calendar className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs font-black text-slate-900 leading-tight">
+              <p className="text-xs font-medium text-slate-900 leading-tight">
                 {formattedDate}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
@@ -208,7 +208,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
               <MapPin className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs font-black text-slate-900 leading-tight">
+              <p className="text-xs font-medium text-slate-900 leading-tight">
                 {location.areaName}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
@@ -227,7 +227,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
                 {selectedCategories.map((c) => (
                   <span
                     key={c.id}
-                    className="text-[10px] font-extrabold text-[#0A3D2B] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80"
+                    className="text-[11px] font-extrabold text-brand bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80"
                   >
                     {c.emoji} {c.name}
                   </span>
@@ -242,7 +242,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
               <Scale className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs font-black text-slate-900 leading-tight">
+              <p className="text-xs font-medium text-slate-900 leading-tight">
                 {selectedWeight?.label || '—'}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
@@ -257,7 +257,7 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
               <Banknote className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs font-black text-slate-900 leading-tight">
+              <p className="text-xs font-medium text-slate-900 leading-tight">
                 {state.paymentPreference === 'CASH'
                   ? 'Cash (Pay on pickup)'
                   : state.paymentPreference === 'DONATE'
@@ -275,11 +275,11 @@ export const BookingSuccessStep: React.FC<BookingSuccessStepProps> = ({
       </div>
 
       {/* Sticky Bottom Actions (Image 3 Screen 5) */}
-      <div className="pt-4 space-y-2.5 border-t border-slate-200/80">
+      <div className="customer-booking-actions pt-4 space-y-2.5 border-t border-slate-200/80">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handlePickupsClick}
-          className="w-full py-4 rounded-2xl bg-[#0A3D2B] text-white font-bold text-sm shadow-xl shadow-emerald-950/20 hover:bg-[#0E4D36] flex items-center justify-center gap-2 transition-all cursor-pointer"
+          className="w-full py-4 rounded-2xl bg-brand text-white font-bold text-sm shadow-xl  hover:bg-[var(--brand-hover)] flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
           <span>Go to My Pickups</span>
           <ArrowRight className="w-4 h-4 stroke-[2.5]" />

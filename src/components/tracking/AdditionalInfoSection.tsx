@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useState } from 'react';
 import { Info, Plus, X, Wrench, Check, Edit3 } from 'lucide-react';
 
@@ -68,7 +69,7 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
         <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center">
           <Info className="w-4 h-4" />
         </div>
-        <h3 className="text-xs font-black text-slate-900 tracking-tight">
+        <h3 className="text-lg font-bold text-slate-900 tracking-tight">
           Additional Information
         </h3>
       </div>
@@ -81,13 +82,13 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
             Special Tools Needed
           </label>
           {!isLocked && (
-            <button
+            <Button
               onClick={() => setShowToolPicker(!showToolPicker)}
-              className="text-[10px] font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-0.5"
+              className="text-[11px] font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-0.5"
             >
               <Plus className="w-3 h-3" />
               Add Tool
-            </button>
+            </Button>
           )}
         </div>
 
@@ -100,12 +101,12 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
               <span>🪜</span>
               <span>{tool}</span>
               {!isLocked && (
-                <button
+                <Button aria-label="Close"
                   onClick={() => handleRemoveTool(tool)}
                   className="w-3.5 h-3.5 rounded-full hover:bg-rose-100 hover:text-rose-600 text-slate-400 flex items-center justify-center ml-0.5 cursor-pointer"
                 >
                   <X className="w-2.5 h-2.5" />
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -118,7 +119,7 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
         {showToolPicker && (
           <div className="mt-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap gap-1.5 animate-in fade-in">
             {AVAILABLE_TOOLS.map((t) => (
-              <button
+              <Button
                 key={t.name}
                 onClick={() => handleAddTool(t.name)}
                 disabled={tools.includes(t.name)}
@@ -130,7 +131,7 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
               >
                 <span>{t.icon}</span>
                 <span>{t.name}</span>
-              </button>
+              </Button>
             ))}
           </div>
         )}
@@ -143,27 +144,27 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
             Doorstep Directions / Notes
           </label>
           {!isLocked && !isEditingRemarks && (
-            <button
+            <Button
               onClick={() => setIsEditingRemarks(true)}
-              className="text-[10px] font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1"
+              className="text-[11px] font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1"
             >
               <Edit3 className="w-3 h-3" />
               Edit
-            </button>
+            </Button>
           )}
         </div>
 
         {isEditingRemarks ? (
           <div className="space-y-2">
-            <textarea
+            <textarea aria-label="e.g. Scrap kept near main gate. Please call 10 mins before arrival."
               value={tempRemarks}
               onChange={(e) => setTempRemarks(e.target.value)}
               placeholder="e.g. Scrap kept near main gate. Please call 10 mins before arrival."
               rows={2}
-              className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-300 bg-white focus:outline-hidden focus:border-[#0A3D2B] text-slate-800"
+              className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-300 bg-white focus:outline-hidden focus:border-brand text-slate-800"
             />
             <div className="flex justify-end gap-2">
-              <button
+              <Button
                 onClick={() => {
                   setTempRemarks(remarks);
                   setIsEditingRemarks(false);
@@ -171,15 +172,15 @@ export const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
                 className="px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-lg"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSaveRemarks}
                 disabled={isSaving}
-                className="px-3 py-1 text-xs font-bold bg-[#0A3D2B] text-white rounded-lg flex items-center gap-1 shadow-2xs"
+                className="px-3 py-1 text-xs font-bold bg-brand text-white rounded-lg flex items-center gap-1 shadow-2xs"
               >
                 <Check className="w-3 h-3" />
                 {isSaving ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (

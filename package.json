@@ -12,7 +12,9 @@
     "android:sync": "cap sync android",
     "android:open": "cap open android",
     "android:run": "cap run android",
-    "setup:android": "npm run android:add && npm run build:app && npm run android:open"
+    "setup:android": "npm run android:add && npm run build:app && npm run android:open",
+    "preview:ui": "node scripts/customer-ui-preview.cjs",
+    "test:ui-preview": "node --test scripts/ui-preview.test.cjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

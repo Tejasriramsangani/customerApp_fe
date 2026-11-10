@@ -13,7 +13,7 @@ const config: CapacitorConfig = {
     // Allow cleartext (HTTP) traffic to the backend on Android 9+
     allowMixedContent: true,
     // Edge-to-edge immersive display
-    backgroundColor: '#0A3D2B',
+    backgroundColor: '#1B5E3A',
   },
   plugins: {
     PushNotifications: {
@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
     },
     SplashScreen: {
       launchShowDuration: 1500,
-      backgroundColor: '#0A3D2B',
+      backgroundColor: '#1B5E3A',
       showSpinner: false,
       androidSpinnerStyle: 'small',
     },

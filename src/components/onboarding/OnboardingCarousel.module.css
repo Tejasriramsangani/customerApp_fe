@@ -1,0 +1,77 @@
+.onboarding {
+  --panel-height: clamp(300px, 39cqh, 376px);
+  --panel-radius: 48px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #fffdf6;
+  color: #1B5E3A;
+}
+.header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 16px 24px 16px 20px;
+}
+.skip { min-height: 44px; min-width: 56px; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-full); background: rgb(0 0 0 / 25%); color: #FEFEFE; box-shadow: none; font-size: 13px; font-weight: var(--font-semibold); }
+.skip:hover { background: rgb(0 0 0 / 28%); }
+.skip:active { background: rgb(0 0 0 / 29%); }
+.stage { display: grid; grid-template-rows: minmax(0, 1fr) var(--panel-height); height: 100%; min-height: 0; touch-action: pan-y; }
+.hero { position: relative; min-height: 0; overflow: hidden; }
+.artworkFrame { position: absolute; inset: 0; overflow: hidden; animation: artworkEnter 180ms ease both; }
+.featureImage {
+  object-fit: cover;
+  object-position: center;
+  /* The image fills the hero and continues behind the panel's curved corners. */
+}
+.artwork {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  /* Cover with a square tile: the existing 2x2 asset keeps its original proportions. */
+  width: max(100cqw, calc(100cqh - var(--panel-height)));
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background-image: url('/onboarding/feature-illustrations.png');
+  background-repeat: no-repeat;
+  background-size: 200% 200%;
+}
+.panel { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 0; margin-top: calc(-1 * var(--panel-radius)); border-radius: var(--panel-radius) var(--panel-radius) 0 0; background: #FEFEFE; }
+.panel::before { content: ''; position: absolute; inset: 0 0 auto; height: var(--panel-radius); border: 3px solid var(--color-signature-gold); border-bottom: 0; border-radius: inherit; pointer-events: none; }
+.content { display: grid; flex: 1; min-height: 0; padding: var(--space-6) var(--space-6) var(--space-2); align-items: center; }
+.copy { width: 100%; text-align: center; animation: copyEnter 180ms ease both; }
+.copy h1 { align-content: end; max-width: 100%; min-height: 2.32em; margin: 0 auto var(--space-2); color: var(--text-primary); font-size: clamp(25px, 6.7cqw, 29px); font-weight: var(--font-extrabold); line-height: 1.16; letter-spacing: -.035em; white-space: pre-line; text-wrap: balance; }
+.copy p { display: grid; align-content: start; max-width: 320px; margin: 0 auto; color: var(--text-secondary); font-size: clamp(13px, 3.65cqw, 15px); line-height: 1.5; text-wrap: pretty; }
+.footer { display: flex; flex-shrink: 0; flex-direction: column; align-items: center; gap: clamp(var(--space-4), 3.8cqh, var(--space-8)); padding: var(--space-2) var(--space-6) max(clamp(24px, 5cqh, 48px), env(safe-area-inset-bottom, 0px)); }
+.dots { margin-top: 0; display: flex; flex-shrink: 0; align-items: center; justify-content: center; align-self: center; }
+.dots .dotButton { width: var(--space-4); min-width: var(--space-4); min-height: 44px; padding: 0; border-radius: var(--radius-sm); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border-default); transition: background-color 180ms ease, transform 180ms ease; }
+.activeDot { background: var(--color-signature-gold); }
+.continueButton { width: 100%; min-height: 58px; padding: var(--space-4) var(--space-6); border-radius: 20px; background: var(--color-brand-green); color: #FEFEFE; font-size: 18px; font-weight: var(--font-semibold); line-height: 1.3; box-shadow: var(--shadow-md); transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+.continueButton:hover { background: var(--brand-hover); }
+.continueButton:active { background: var(--brand-dark); transform: scale(.99); box-shadow: var(--shadow-sm); }
+.continueButton:disabled { background: var(--border-default); color: var(--text-muted); box-shadow: none; cursor: not-allowed; transform: none; }
+.continueButton:focus-visible, .dotButton:focus-visible, .skip:focus-visible { outline: 3px solid var(--color-signature-gold); outline-offset: 3px; }
+@container customer-app (max-height: 700px) {
+  .onboarding { --panel-height: 300px; --panel-radius: 44px; }
+  .header { padding-top: 8px; }
+  .content { padding-top: 4px; padding-bottom: 4px; }
+  .copy h1 { font-size: 24px; margin-bottom: 8px; }
+  .copy p { font-size: 13px; }
+  .footer { padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+}
+/* React replaces both slide sections in the same commit. CSS owns only the
+   visual entry, so there is no delayed DOM removal when navigation interrupts it. */
+@keyframes artworkEnter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes copyEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .dot, .continueButton { transition: none; }
+  .artworkFrame, .copy { animation: none; }
+}

@@ -1,0 +1,42 @@
+.screen { height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; background: #FFFEF8; color: var(--color-brand-green); padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+.header { height: 64px; display: flex; align-items: center; padding: 8px 16px; }
+.back { width: 44px; height: 44px; padding: 0; background: transparent; color: var(--color-brand-green); }
+.hero { position: relative; width: 100%; height: clamp(220px, 36cqh, 340px); overflow: hidden; border-radius: 0 0 45% 12%; }
+.heroImage { object-fit: cover; object-position: center 40%; }
+.otpHero { display: grid; place-items: center; height: clamp(210px, 33cqh, 310px); }
+.otpArt { width: min(72%, 260px); height: 100%; }
+.avatarWrap { position: relative; width: clamp(180px, 54cqw, 226px); aspect-ratio: 1; margin: 32px auto; }
+.avatar { position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--color-soft-green); }
+.avatarImage { object-fit: cover; object-position: 20% 15%; transform: scale(1.7); transform-origin: 25% 18%; }
+.avatarEdit { position: absolute; right: 0; bottom: 8px; width: 44px; height: 44px; padding: 0; border-radius: 50%; background: #FEFEFE; border: 1px solid var(--border-default); color: var(--color-brand-green); box-shadow: var(--shadow-sm); }
+.content { padding: 24px 16px 0; }
+.content h1 { margin: 0 0 10px; font-size: clamp(24px, 6.4cqw, 28px); font-weight: 800; line-height: 1.18; letter-spacing: -.035em; }
+.content p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-secondary); max-width: 340px; }
+.form { margin-top: 32px; }
+.form label:not(:global(.sr-only)) { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 700; }
+.inputShell { display: flex; align-items: center; min-height: 56px; border: 1px solid var(--border-default); border-radius: 12px; background: #FFFEF8; overflow: hidden; }
+.inputShell:focus-within { border-color: var(--color-brand-green); outline: 2px solid var(--color-brand-green); outline-offset: 2px; }
+.inputShell input { flex: 1; width: 100%; min-width: 0; padding: 16px; background: transparent; color: var(--text-primary); border: 0; outline: none; font-size: 16px; }
+.country { display: flex; gap: 8px; align-items: center; align-self: stretch; padding: 0 12px; border-right: 1px solid var(--border-default); font-size: 14px; font-weight: 700; white-space: nowrap; }
+.country span { font-size: 22px; }
+.clear { min-width: 36px; min-height: 44px; padding: 0 8px; background: transparent; color: var(--text-secondary); }
+.userIcon { flex-shrink: 0; margin-left: 16px; }
+.primary { composes: allow from '../location/LocationPermissionScreen.module.css'; margin-top: 20px; display: flex; align-items: center; justify-content: center; }
+.primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.mobileCaption { display: flex; align-items: center; gap: 8px; }
+.mobileCaption strong { font-weight: 500; }
+.editMobile { min-width: 44px; min-height: 44px; background: transparent; color: var(--color-brand-green); }
+.otpFields { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 32px; }
+.otpFields input { width: 100%; min-width: 0; height: 56px; border: 1px solid var(--border-default); border-radius: 10px; background: #FFFEF8; font-size: 20px; font-weight: 700; text-align: center; color: var(--text-primary); }
+.otpFields input:focus { outline: 2px solid var(--color-brand-green); outline-offset: 2px; }
+.otpFields input[data-filled='true'] { border-color: var(--color-brand-green); }
+.otpFields input[aria-invalid='true'] { border-color: var(--color-error, #b42318); }
+.resend { display: flex; justify-content: center; margin: 24px 0 4px; min-height: 44px; align-items: center; }
+.resend p { font-size: 14px; }
+.resend strong { color: var(--color-brand-green); }
+.textButton { min-height: 44px; background: transparent; color: var(--color-brand-green); gap: 8px; }
+.content .error { font-size: 13px; color: var(--color-error, #b42318); margin-top: 12px; }
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-height: 720px) { .header { height: 48px; } .hero, .otpHero { height: clamp(100px, 28cqh, 200px); } .avatarWrap { width: 150px; margin: 12px auto; } .content { padding-top: 16px; } .form, .otpFields { margin-top: 20px; } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }

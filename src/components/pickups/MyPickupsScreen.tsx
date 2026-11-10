@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { PickupCard, PickupItemData } from './PickupCard';
 import { EmptyCancelledState } from './EmptyCancelledState';
@@ -70,29 +71,29 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
   }, [livePickups]);
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between px-1">
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">My Pickups</h2>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">My Pickups</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Track active scrap bookings and view invoice receipts
           </p>
         </div>
 
-        <button
+        <Button aria-label="Refresh pickups"
           onClick={fetchPickups}
           disabled={isLoading}
           className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
           title="Refresh pickups"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-emerald-800' : ''}`} />
-        </button>
+        </Button>
       </div>
 
       {/* Tabs */}
       <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl">
-        <button
+        <Button
           onClick={() => setActiveTab('scheduled')}
           className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'scheduled'
@@ -101,8 +102,8 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
           }`}
         >
           Scheduled {scheduledList.length > 0 && `(${scheduledList.length})`}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setActiveTab('completed')}
           className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'completed'
@@ -111,8 +112,8 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
           }`}
         >
           Completed {completedList.length > 0 && `(${completedList.length})`}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setActiveTab('cancelled')}
           className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'cancelled'
@@ -121,7 +122,7 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
           }`}
         >
           Cancelled
-        </button>
+        </Button>
       </div>
 
       {/* Tab Contents */}
@@ -146,17 +147,17 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto mb-3">
               <Package className="w-6 h-6 stroke-[1.8]" />
             </div>
-            <h4 className="text-sm font-bold text-slate-800 mb-1">No Active Pickups</h4>
+            <h4 className="text-base font-bold text-slate-800 mb-1">No Active Pickups</h4>
             <p className="text-xs text-slate-500 max-w-xs mx-auto mb-4">
               You don't have any pending scrap collections scheduled right now.
             </p>
-            <button
+            <Button aria-label="Add"
               onClick={onRequestNewPickup}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold shadow-md hover:bg-[#072c1f] transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-bold shadow-md hover:bg-[var(--brand-dark)] transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Schedule Scrap Pickup</span>
-            </button>
+            </Button>
           </div>
         )
       ) : activeTab === 'completed' ? (
@@ -176,7 +177,7 @@ export const MyPickupsScreen: React.FC<MyPickupsScreenProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-3">
               <Package className="w-6 h-6 stroke-[1.8]" />
             </div>
-            <h4 className="text-sm font-bold text-slate-800 mb-1">No Completed Orders Yet</h4>
+            <h4 className="text-base font-bold text-slate-800 mb-1">No Completed Orders Yet</h4>
             <p className="text-xs text-slate-500 max-w-xs mx-auto">
               Once scrap is weighed and paid at your doorstep, digital receipts will appear here.
             </p>

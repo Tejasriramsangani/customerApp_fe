@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, DialogSurface } from '../ui';
 import React, { useState, useEffect } from 'react';
 import {
   MapPin,
@@ -109,29 +110,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const userMobile = user?.mobile ? `+91 ${user.mobile}` : '—';
 
   return (
-    <div className="w-full flex flex-col space-y-4 pb-20 animate-in fade-in">
+    <div className="w-full flex flex-col space-y-4 animate-in fade-in">
       {/* 1. Profile Header Card (Screen 10) */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs relative overflow-hidden">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-linear-to-br from-[#0A3D2B] to-[#146B4E] text-white flex items-center justify-center font-black text-2xl shadow-md border-2 border-emerald-100">
+            <div className="w-16 h-16 rounded-full bg-linear-to-br from-brand to-brand text-white flex items-center justify-center font-bold text-2xl shadow-md border-2 border-emerald-100">
               {userInitial}
             </div>
-            <button
+            <Button aria-label="Edit Profile"
               onClick={onEditName}
               className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-xs text-slate-700 hover:text-emerald-800 flex items-center justify-center transition-colors cursor-pointer"
               title="Edit Profile"
             >
               <Edit2 className="w-3 h-3 stroke-[2.5]" />
-            </button>
+            </Button>
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-black text-slate-900 tracking-tight truncate">
+              <h2 className="text-base font-bold text-slate-900 tracking-tight truncate">
                 {userName}
               </h2>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
                 <ShieldCheck className="w-3 h-3 text-emerald-700" />
                 Verified
               </span>
@@ -152,7 +153,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       {/* 2. Menu Options List (Screen 10) */}
       <div className="bg-white rounded-3xl border border-slate-200/90 divide-y divide-slate-100 shadow-xs overflow-hidden">
         {/* Item 1: My Addresses */}
-        <button
+        <Button aria-label="Next"
           onClick={() => setActiveModal('addresses')}
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left cursor-pointer group"
         >
@@ -161,15 +162,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <MapPin className="w-4.5 h-4.5 stroke-[2.2]" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900">My Addresses</p>
+              <p className="text-xs font-medium text-slate-900">My Addresses</p>
               <p className="text-[11px] text-slate-400">Manage pickup locations & landmarks</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
+        </Button>
 
         {/* Item 2: Payment Methods */}
-        <button
+        <Button aria-label="Next"
           onClick={() => setActiveModal('payment')}
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left cursor-pointer group"
         >
@@ -178,17 +179,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <CreditCard className="w-4.5 h-4.5 stroke-[2.2]" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900">Payment Preferences</p>
+              <p className="text-xs font-medium text-slate-900">Payment Preferences</p>
               <p className="text-[11px] text-slate-400">
                 Device preference: {paymentPref === 'CASH' ? 'Cash on pickup' : 'Instant UPI'}
               </p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
+        </Button>
 
         {/* Item 3: Notifications */}
-        <button
+        <Button aria-label="Next"
           onClick={() => setActiveModal('notifications')}
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left cursor-pointer group"
         >
@@ -197,15 +198,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Bell className="w-4.5 h-4.5 stroke-[2.2]" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900">Notifications</p>
+              <p className="text-xs font-medium text-slate-900">Notifications</p>
               <p className="text-[11px] text-slate-400">Device preferences for push updates & SMS</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
+        </Button>
 
         {/* Item 4: Help & Support */}
-        <button
+        <Button aria-label="Next"
           onClick={() => setActiveModal('help')}
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left cursor-pointer group"
         >
@@ -214,15 +215,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <HelpCircle className="w-4.5 h-4.5 stroke-[2.2]" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900">Help & Support</p>
+              <p className="text-xs font-medium text-slate-900">Help & Support</p>
               <p className="text-[11px] text-slate-400">FAQs & WhatsApp assistance</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
+        </Button>
 
         {/* Item 5: About Us */}
-        <button
+        <Button aria-label="Next"
           onClick={() => setActiveModal('about')}
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left cursor-pointer group"
         >
@@ -231,15 +232,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Info className="w-4.5 h-4.5 stroke-[2.2]" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900">About ASLI KAATA</p>
+              <p className="text-xs font-medium text-slate-900">About ASLI KAATA</p>
               <p className="text-[11px] text-slate-400">Real Weight. Real Value. Mission</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
+        </Button>
 
         {/* Item 6: Language */}
-        <button
+        <Button aria-label="Next"
           onClick={() => setActiveModal('language')}
           className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left cursor-pointer group"
         >
@@ -248,39 +249,39 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Globe className="w-4.5 h-4.5 stroke-[2.2]" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900">Language</p>
+              <p className="text-xs font-medium text-slate-900">Language</p>
               <p className="text-[11px] text-slate-400">
                 Device preference: {language === 'en' ? 'English' : 'తెలుగు (Telugu)'}
               </p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
+        </Button>
       </div>
 
       {/* 3. Logout Button Card */}
       <div className="bg-white rounded-3xl p-4 border border-rose-100 shadow-2xs">
-        <button
+        <Button aria-label="Sign out"
           onClick={onLogout}
           className="w-full py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 active:scale-[0.99] text-rose-600 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           <span>Log Out of Account</span>
-        </button>
+        </Button>
       </div>
 
       {/* SUB-MODAL 1: My Addresses */}
       {activeModal === 'addresses' && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/60  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <DialogSurface onClose={() => setActiveModal(null)} label="Saved Addresses" className="customer-modal-panel bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900">Saved Addresses</h3>
-              <button
+              <h3 className="text-lg font-bold text-slate-900">Saved Addresses</h3>
+              <Button aria-label="Close"
                 onClick={() => setActiveModal(null)}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="overflow-y-auto my-3 space-y-2 flex-1 pr-1">
@@ -291,14 +292,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 >
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-black text-slate-900">{addressTitle(addr)}</span>
+                      <span className="text-xs font-bold text-slate-900">{addressTitle(addr)}</span>
                       {addr.isDefault && (
-                        <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[11px] font-bold uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
                           Primary
                         </span>
                       )}
                     </div>
-                    <p className="text-xs font-bold text-slate-800">{addressLine(addr)}</p>
+                    <p className="text-xs font-medium text-slate-800">{addressLine(addr)}</p>
                     {addr.landmark && (
                       <p className="text-[11px] text-slate-500">Landmark: {addr.landmark}</p>
                     )}
@@ -306,22 +307,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       {addr.city}, {addr.state} - {addr.pincode}
                     </p>
                     {!addr.isDefault && (
-                      <button
+                      <Button
                         type="button"
                         onClick={() => makePrimary(addr)}
-                        className="text-[10px] font-bold text-emerald-800 hover:underline pt-1 cursor-pointer"
+                        className="text-[11px] font-bold text-emerald-800 hover:underline pt-1 cursor-pointer"
                       >
                         Make primary
-                      </button>
+                      </Button>
                     )}
                   </div>
                   {addresses.length > 1 && (
-                    <button
+                    <Button aria-label="Delete"
                       onClick={() => handleDeleteAddress(addr._id || addr.id)}
                       className="text-slate-400 hover:text-rose-600 p-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               ))}
@@ -333,35 +334,35 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   defaultLabel={nextAddressLabel(addresses)}
                 />
               ) : addresses.length < MAX_SAVED_ADDRESSES ? (
-                <button
+                <Button aria-label="Add"
                   onClick={() => setIsAddingAddress(true)}
                   className="w-full py-2.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-600 text-xs font-bold text-slate-600 hover:text-emerald-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{addresses.length === 0 ? 'Add Address' : 'Add Another Address'}</span>
-                </button>
+                </Button>
               ) : (
                 <p className="text-[11px] text-slate-400 text-center py-1">
                   You can save up to {MAX_SAVED_ADDRESSES} addresses. Delete one to add another.
                 </p>
               )}
             </div>
-          </div>
+          </DialogSurface>
         </div>
       )}
 
       {/* SUB-MODAL 2: Payment Preferences */}
       {activeModal === 'payment' && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/60  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <DialogSurface onClose={() => setActiveModal(null)} label="Payment Preferences" className="customer-modal-panel bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900">Payment Preferences</h3>
-              <button
+              <h3 className="text-lg font-bold text-slate-900">Payment Preferences</h3>
+              <Button aria-label="Close"
                 onClick={() => setActiveModal(null)}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="my-4 space-y-2">
@@ -369,13 +370,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 onClick={() => setPaymentPref('CASH')}
                 className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer ${
                   paymentPref === 'CASH'
-                    ? 'border-[#0A3D2B] bg-emerald-50 text-[#0A3D2B] font-bold'
+                    ? 'border-brand bg-emerald-50 text-brand font-bold'
                     : 'border-slate-200 bg-white text-slate-700 font-medium'
                 }`}
               >
                 <div>
                   <p className="text-xs">Cash (Pay on Doorstep)</p>
-                  <p className="text-[10px] text-slate-400">Receive cash in hand after weigh-in</p>
+                  <p className="text-[11px] text-slate-400">Receive cash in hand after weigh-in</p>
                 </div>
                 {paymentPref === 'CASH' && <Check className="w-4 h-4" />}
               </label>
@@ -384,52 +385,52 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 onClick={() => setPaymentPref('UPI')}
                 className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer ${
                   paymentPref === 'UPI'
-                    ? 'border-[#0A3D2B] bg-emerald-50 text-[#0A3D2B] font-bold'
+                    ? 'border-brand bg-emerald-50 text-brand font-bold'
                     : 'border-slate-200 bg-white text-slate-700 font-medium'
                 }`}
               >
                 <div>
                   <p className="text-xs">Instant UPI Transfer</p>
-                  <p className="text-[10px] text-slate-400">Transferred directly to your phone number / VPA</p>
+                  <p className="text-[11px] text-slate-400">Transferred directly to your phone number / VPA</p>
                 </div>
                 {paymentPref === 'UPI' && <Check className="w-4 h-4" />}
               </label>
             </div>
 
-            <button
+            <Button
               onClick={() => setActiveModal(null)}
-              className="w-full py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold"
+              className="w-full py-2.5 rounded-xl bg-brand text-white text-xs font-bold"
             >
               Done
-            </button>
-          </div>
+            </Button>
+          </DialogSurface>
         </div>
       )}
 
       {/* SUB-MODAL 3: Help & Support */}
       {activeModal === 'help' && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-3">
+        <div className="fixed inset-0 z-50 bg-black/60  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <DialogSurface onClose={() => setActiveModal(null)} label="Help & Support" className="customer-modal-panel bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900">Help & Support</h3>
-              <button
+              <h3 className="text-lg font-bold text-slate-900">Help & Support</h3>
+              <Button aria-label="Close"
                 onClick={() => setActiveModal(null)}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-2 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <p className="font-bold text-slate-900">How does weigh-in work?</p>
+                <p className="font-medium text-slate-900">How does weigh-in work?</p>
                 <p className="text-slate-500 text-[11px] mt-0.5">
                   Our executive brings an ISO-certified digital weighing scale. The weight is visible to you, and rates are locked transparently.
                 </p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <p className="font-bold text-slate-900">What if I have bulk scrap?</p>
+                <p className="font-medium text-slate-900">What if I have bulk scrap?</p>
                 <p className="text-slate-500 text-[11px] mt-0.5">
                   Orders over bulk thresholds get dedicated pickers assigned directly with higher transport capacity.
                 </p>
@@ -448,28 +449,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </a>
               <a
                 href="tel:9876543210"
-                className="flex-1 py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs"
+                className="flex-1 py-2.5 rounded-xl bg-brand text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <Phone className="w-3.5 h-3.5" />
                 Call Helpline
               </a>
             </div>
-          </div>
+          </DialogSurface>
         </div>
       )}
 
       {/* SUB-MODAL 4: About Us */}
       {activeModal === 'about' && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-3">
+        <div className="fixed inset-0 z-50 bg-black/60  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <DialogSurface onClose={() => setActiveModal(null)} label="About ASLI KAATA" className="customer-modal-panel bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900">About ASLI KAATA</h3>
-              <button
+              <h3 className="text-lg font-bold text-slate-900">About ASLI KAATA</h3>
+              <Button aria-label="Close"
                 onClick={() => setActiveModal(null)}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="text-xs text-slate-600 space-y-2 leading-relaxed">
@@ -477,65 +478,65 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <strong>ASLI KAATA</strong> represents transparency and honesty in doorstep scrap collection.
               </p>
               <p>
-                <strong>Real Weight. Real Value:</strong> We eliminate faulty mechanical scales by mandating digital precision scales and itemized receipt vouchers.
+                <strong className="data-value">Real Weight. Real Value:</strong> We eliminate faulty mechanical scales by mandating digital precision scales and itemized receipt vouchers.
               </p>
               <p className="text-[11px] text-slate-400">
                 Operating proudly across Vijayawada and Krishna District.
               </p>
             </div>
 
-            <button
+            <Button
               onClick={() => setActiveModal(null)}
-              className="w-full py-2.5 rounded-xl bg-[#0A3D2B] text-white text-xs font-bold mt-2"
+              className="w-full py-2.5 rounded-xl bg-brand text-white text-xs font-bold mt-2"
             >
               Close
-            </button>
-          </div>
+            </Button>
+          </DialogSurface>
         </div>
       )}
 
       {/* SUB-MODAL 5: Language */}
       {activeModal === 'language' && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-3">
+        <div className="fixed inset-0 z-50 bg-black/60  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <DialogSurface onClose={() => setActiveModal(null)} label="Select Language" className="customer-modal-panel bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900">Select Language</h3>
-              <button
+              <h3 className="text-lg font-bold text-slate-900">Select Language</h3>
+              <Button aria-label="Close"
                 onClick={() => setActiveModal(null)}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-2 my-2">
-              <button
+              <Button
                 onClick={() => {
                   setLanguage('en');
                   setActiveModal(null);
                 }}
                 className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
-                  language === 'en' ? 'border-[#0A3D2B] bg-emerald-50 text-[#0A3D2B] font-bold' : 'border-slate-200'
+                  language === 'en' ? 'border-brand bg-emerald-50 text-brand font-bold' : 'border-slate-200'
                 }`}
               >
                 <span className="text-xs">English</span>
                 {language === 'en' && <Check className="w-4 h-4" />}
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={() => {
                   setLanguage('te');
                   setActiveModal(null);
                 }}
                 className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
-                  language === 'te' ? 'border-[#0A3D2B] bg-emerald-50 text-[#0A3D2B] font-bold' : 'border-slate-200'
+                  language === 'te' ? 'border-brand bg-emerald-50 text-brand font-bold' : 'border-slate-200'
                 }`}
               >
                 <span className="text-xs">తెలుగు (Telugu)</span>
                 {language === 'te' && <Check className="w-4 h-4" />}
-              </button>
+              </Button>
             </div>
-          </div>
+          </DialogSurface>
         </div>
       )}
     </div>

@@ -19,6 +19,8 @@ export interface LocationData {
   landmark?: string;
   /** 'gps' = detected from the phone, 'manual' = picked from the locality list. */
   source?: 'gps' | 'manual';
+  /** Existing saved-address identifier; never replace it with a new record on selection. */
+  addressId?: string;
 }
 
 interface RequestLocationOptions {

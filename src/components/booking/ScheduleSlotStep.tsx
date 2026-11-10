@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -278,10 +279,10 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
     (canContinueRoute || canContinueSlots || (outOfCoverage && addressReady));
 
   return (
-    <div className="flex flex-col justify-between min-h-[calc(100vh-140px)]">
-      <div className="space-y-5 pb-6">
+    <div className="customer-booking-step flex flex-col justify-between ">
+      <div className="customer-booking-step-body space-y-5 pb-6">
         <div>
-          <h2 className="text-xl font-black text-slate-900 leading-tight">
+          <h2 className="text-2xl font-bold text-slate-900 leading-tight">
             When would you like us to pick it up?
           </h2>
           <p className="text-xs text-slate-500 mt-1">
@@ -300,7 +301,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
           </p>
         ) : loading ? (
           <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-[#0A3D2B]" />
+            <Loader2 className="w-6 h-6 animate-spin text-brand" />
             <span className="text-xs font-semibold">Loading available slots...</span>
           </div>
         ) : availabilityError ? (
@@ -311,9 +312,9 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
         ) : availabilityMode === 'ROUTE_DAYS' ? (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/90 flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-[#0A3D2B] mt-0.5 shrink-0" />
+              <Sparkles className="w-4 h-4 text-brand mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs font-bold text-[#0A3D2B]">
+                <p className="text-xs font-medium text-brand">
                   {helperText || `We collect from ${location.areaName || 'your area'} on these days.`}
                 </p>
                 <p className="text-[11px] text-emerald-800/80 mt-0.5">
@@ -336,7 +337,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
                       onClick={() => handleSelectRouteDate(item)}
                       className={`p-4 rounded-3xl border-2 flex items-center justify-between cursor-pointer transition-all shadow-xs ${
                         isSelected
-                          ? 'border-[#0A3D2B] bg-emerald-50/70 shadow-sm ring-1 ring-[#0A3D2B]'
+                          ? 'border-brand bg-emerald-50/70 shadow-sm ring-1 ring-brand'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
@@ -344,17 +345,17 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
                         <div
                           className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center transition-colors ${
                             isSelected
-                              ? 'bg-[#0A3D2B] text-white shadow-md'
+                              ? 'bg-brand text-white shadow-md'
                               : 'bg-slate-100 text-slate-700'
                           }`}
                         >
-                          <span className="text-[10px] font-bold uppercase tracking-wider leading-none">
+                          <span className="text-[11px] font-bold uppercase tracking-wider leading-none">
                             {item.weekday}
                           </span>
-                          <span className="text-base font-black my-0.5 leading-none">
+                          <span className="text-base font-bold my-0.5 leading-none">
                             {item.dayNum}
                           </span>
-                          <span className="text-[9px] font-medium leading-none opacity-80">
+                          <span className="text-[11px] font-medium leading-none opacity-80">
                             {item.monthStr}
                           </span>
                         </div>
@@ -362,7 +363,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
                         <div>
                           <h4
                             className={`text-xs font-extrabold ${
-                              isSelected ? 'text-[#0A3D2B]' : 'text-slate-900'
+                              isSelected ? 'text-brand' : 'text-slate-900'
                             }`}
                           >
                             {item.weekday}, {item.dayNum} {item.monthStr}
@@ -377,10 +378,10 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
 
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          isSelected ? 'border-[#0A3D2B] bg-white' : 'border-slate-300 bg-white'
+                          isSelected ? 'border-brand bg-white' : 'border-slate-300 bg-white'
                         }`}
                       >
-                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#0A3D2B]" />}
+                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-brand" />}
                       </div>
                     </motion.div>
                   );
@@ -389,7 +390,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
             ) : outOfCoverage ? (
               <div className="p-4 rounded-3xl bg-amber-50 border border-amber-200 text-center space-y-2">
                 <AlertCircle className="w-6 h-6 text-amber-700 mx-auto" />
-                <h4 className="text-xs font-extrabold text-amber-900">Coverage Note</h4>
+                <h4 className="text-base font-extrabold text-amber-900">Coverage Note</h4>
                 <p className="text-[11px] text-amber-800 leading-relaxed">
                   We will confirm a collection day for your area shortly. You can proceed with your
                   request, and our operations team will coordinate your pickup.
@@ -402,7 +403,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
             {/* Date strip */}
             <section>
               <div className="flex items-center justify-between mb-2.5 px-0.5">
-                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Pickup date</h3>
+                <h3 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider">Pickup date</h3>
                 {selectedDateItem && (
                   <span className="text-[11px] font-semibold text-slate-500">
                     {selectedDateItem.weekday}, {selectedDateItem.dayNum} {selectedDateItem.monthStr}
@@ -425,19 +426,19 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
                         full
                           ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
                           : isSelected
-                            ? 'border-[#0A3D2B] bg-[#0A3D2B] text-white shadow-md shadow-emerald-950/20'
+                            ? 'border-brand bg-brand text-white shadow-md '
                             : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'
                       }`}
                     >
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider ${
-                          full ? 'text-slate-300' : isSelected ? 'text-[#F59E0B]' : 'text-slate-400'
+                        className={`text-[11px] font-bold uppercase tracking-wider ${
+                          full ? 'text-slate-300' : isSelected ? 'text-gold' : 'text-slate-400'
                         }`}
                       >
                         {item.label}
                       </span>
-                      <span className="text-xl font-black leading-none my-1">{item.dayNum}</span>
-                      <span className={`text-[10px] font-medium ${isSelected ? 'text-emerald-100' : ''}`}>
+                      <span className="text-xl font-bold leading-none my-1">{item.dayNum}</span>
+                      <span className={`text-[11px] font-medium ${isSelected ? 'text-emerald-100' : ''}`}>
                         {item.monthStr}
                       </span>
                     </motion.button>
@@ -448,7 +449,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
 
             {/* Time slots grouped by part of day */}
             <section className="space-y-4">
-              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider px-0.5">Time slot</h3>
+              <h3 className="text-lg font-extrabold text-slate-800 uppercase tracking-wider px-0.5">Time slot</h3>
 
               {availableSlots.length === 0 ? (
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
@@ -465,14 +466,14 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
                           <Icon className="w-3.5 h-3.5" />
                         </span>
                         <span className="text-xs font-extrabold text-slate-800">{label}</span>
-                        <span className="text-[10px] font-medium text-slate-400">{hint}</span>
+                        <span className="text-[11px] font-medium text-slate-400">{hint}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {group.map((slot) => {
                           const isSelected = state.selectedSlotId === slot.id;
                           const bookable = isSlotBookable(state.selectedDate, slot.startTime);
                           return (
-                            <button
+                            <Button
                               key={slot.id}
                               type="button"
                               disabled={!bookable}
@@ -482,35 +483,35 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
                                 !bookable
                                   ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
                                   : isSelected
-                                    ? 'border-[#0A3D2B] bg-emerald-50/70 ring-1 ring-[#0A3D2B]/30'
+                                    ? 'border-brand bg-emerald-50/70 ring-1 ring-brand/30'
                                     : 'border-slate-200 bg-white hover:border-slate-300'
                               }`}
                             >
                               <span className="flex items-center gap-1.5">
                                 <Clock
                                   className={`w-3.5 h-3.5 shrink-0 ${
-                                    isSelected ? 'text-[#0A3D2B]' : bookable ? 'text-slate-400' : 'text-slate-300'
+                                    isSelected ? 'text-brand' : bookable ? 'text-slate-400' : 'text-slate-300'
                                   }`}
                                 />
                                 <span
                                   className={`text-xs font-extrabold leading-tight ${
-                                    isSelected ? 'text-[#0A3D2B]' : bookable ? 'text-slate-800' : 'text-slate-300'
+                                    isSelected ? 'text-brand' : bookable ? 'text-slate-800' : 'text-slate-300'
                                   }`}
                                 >
                                   {slot.displayLabel}
                                 </span>
                               </span>
                               {!bookable && (
-                                <span className="block text-[10px] font-semibold text-slate-400 mt-1">
+                                <span className="block text-[11px] font-semibold text-slate-400 mt-1">
                                   Not available today
                                 </span>
                               )}
                               {isSelected && (
-                                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#0A3D2B] text-white flex items-center justify-center shadow">
+                                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center shadow">
                                   <Check className="w-3 h-3 stroke-[3]" />
                                 </span>
                               )}
-                            </button>
+                            </Button>
                           );
                         })}
                       </div>
@@ -528,7 +529,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
             >
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                  canContinueSlots ? 'bg-[#0A3D2B] text-white' : 'bg-slate-200 text-slate-500'
+                  canContinueSlots ? 'bg-brand text-white' : 'bg-slate-200 text-slate-500'
                 }`}
               >
                 <CalendarCheck className="w-5 h-5" />
@@ -536,7 +537,7 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
               <div className="min-w-0">
                 {canContinueSlots && selectedDateItem && selectedSlot ? (
                   <>
-                    <p className="text-xs font-extrabold text-[#0A3D2B]">
+                    <p className="text-xs font-medium text-brand">
                       {selectedDateItem.weekday}, {selectedDateItem.dayNum} {selectedDateItem.monthStr} ·{' '}
                       {selectedSlot.displayLabel}
                     </p>
@@ -554,23 +555,23 @@ export const ScheduleSlotStep: React.FC<ScheduleSlotStepProps> = ({ onBack, onNe
         )}
       </div>
 
-      <div className="pt-4 border-t border-slate-200/80">
+      <div className="customer-booking-actions pt-4 border-t border-slate-200/80">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleContinue}
           disabled={!isContinueEnabled}
           className={`w-full py-4 rounded-2xl font-bold text-sm shadow-xl flex items-center justify-center gap-2 transition-all ${
             isContinueEnabled
-              ? 'bg-[#0A3D2B] text-white shadow-emerald-950/20 hover:bg-[#0E4D36] cursor-pointer'
+              ? 'bg-brand text-white  hover:bg-[var(--brand-hover)] cursor-pointer'
               : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
           }`}
         >
           <span>{outOfCoverage && routeDates.length === 0 ? 'Continue anyway' : 'Continue'}</span>
           <ArrowRight className="w-4 h-4 stroke-[2.5]" />
         </motion.button>
-        <button type="button" className="sr-only" onClick={onBack}>
+        <Button type="button" className="sr-only" onClick={onBack}>
           Back
-        </button>
+        </Button>
       </div>
     </div>
   );

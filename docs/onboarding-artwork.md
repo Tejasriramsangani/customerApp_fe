@@ -1,0 +1,16 @@
+# Customer onboarding illustrations
+
+Generated with the built-in imagegen tool using the user's attached four-screen onboarding image as a style/composition reference. Saved project asset: `public/onboarding/feature-illustrations.png`. The original generated image is retained in the tool's generated-images directory.
+
+The asset is a square 2-by-2 atlas: top left pricing, top right scheduling, bottom left doorstep collection, bottom right cleaner city. CSS background positions select a quadrant without requiring separate image downloads. Headings, descriptions, navigation, benefit icons, and calls to action are live React UI. Illustrated phone screens are explanatory artwork and do not display actual catalogue prices.
+
+## Final generation prompt
+
+Create a production illustration asset for the ASLI KAATA customer onboarding app, using the attached reference image ONLY as a style/composition reference. Deliver ONE square image with a precisely aligned 2 by 2 grid of FOUR equal square illustrations, edge-to-edge with no gutters, no panel borders. Each quadrant will be displayed separately using CSS background-position, so keep all subjects within their own quadrant. Style: polished warm Indian editorial cartoon illustration, soft natural shading, clean dark forest green outlines, welcoming expressive people, cream #FFFDF5 backgrounds, forest green #1B5E3A, gold #FFC615 accents, soft green foliage. TOP LEFT: smiling young Indian woman wearing a yellow kurta beside a large slightly tilted smartphone showing scrap category rows with small realistic material icons (iron, paper, plastic bottles, aluminium, circuit board). Phone screen can have short category labels but NO numeric prices. Pale green Indian city buildings behind. TOP RIGHT: closeup hand holding a large dark green smartphone showing a clean pickup scheduling interface, category pictograms, weight icon, camera icon, map pin icon, and a green action bar; warm soft yellow circular backdrop. Avoid words inside phone except a small 'Schedule Pickup' header if needed, no numbers. BOTTOM LEFT: friendly Indian scrap collection worker in dark green cap and polo visiting a woman in yellow kurta at her house, paper stacks and metal scrap on an accurate digital weighing scale in foreground, leafy courtyard behind. BOTTOM RIGHT: beautiful clean green Indian urban park with curving walking path, lush trees, distant pale blue-green modern city buildings, airy blue sky and soft white clouds. NO overlaid onboarding headings, NO captions, NO buttons, NO navigation dots, NO status bars, NO outer phone frames, NO watermark. This is illustration art only, not a screenshot of the reference. All four illustrations share matching visual style and light cream background. Generate high resolution square composition.
+
+## Verification
+
+- Customer TypeScript check, component ESLint check, and production static build passed.
+- All four slides checked at 320x640, 390x844, and 768x900; illustrations loaded and no horizontal overflow or runtime exceptions were found.
+- Skip and Get Started preserve the existing `aslikaata_onboarded` flag and continue to the location flow.
+- Existing installations retain their completed onboarding state. Clearing app storage resets onboarding and signs the user out.

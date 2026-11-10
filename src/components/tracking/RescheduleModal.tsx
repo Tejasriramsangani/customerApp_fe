@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, DialogSurface } from '../ui';
 import React, { useState } from 'react';
 import { Calendar, Clock, X, Check } from 'lucide-react';
 import { usePickupBooking } from '../../context/PickupBookingContext';
@@ -53,8 +54,8 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-      <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 pb-safe sm:pb-5 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/50  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+      <DialogSurface label="Reschedule Pickup" onClose={onClose} className="customer-modal-panel bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 pb-safe sm:pb-5 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
@@ -62,16 +63,16 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
               <Calendar className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-900">Reschedule Pickup</h3>
-              <p className="text-[10px] text-slate-400">Choose a new date and time slot</p>
+              <h3 className="text-lg font-bold text-slate-900">Reschedule Pickup</h3>
+              <p className="text-[11px] text-slate-400">Choose a new date and time slot</p>
             </div>
           </div>
-          <button
+          <Button aria-label="Close"
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200"
           >
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         <div className="overflow-y-auto my-3 space-y-4 flex-1 pr-1">
@@ -84,21 +85,21 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
               {availableDates.map((item) => {
                 const isSelected = selectedDate === item.iso;
                 return (
-                  <button
+                  <Button
                     key={item.iso}
                     onClick={() => setSelectedDate(item.iso)}
                     className={`shrink-0 flex flex-col items-center justify-center w-15 py-2.5 rounded-2xl border transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-[#0A3D2B] bg-[#0A3D2B] text-white shadow-xs'
+                        ? 'border-brand bg-brand text-white shadow-xs'
                         : 'border-slate-200 bg-slate-50/60 text-slate-700 hover:border-slate-300'
                     }`}
                   >
-                    <span className="text-[10px] font-semibold uppercase opacity-80">
+                    <span className="text-[11px] font-semibold uppercase opacity-80">
                       {item.weekday}
                     </span>
-                    <span className="text-base font-black my-0.5">{item.day}</span>
-                    <span className="text-[10px] font-semibold">{item.month}</span>
-                  </button>
+                    <span className="text-base font-bold my-0.5">{item.day}</span>
+                    <span className="text-[11px] font-semibold">{item.month}</span>
+                  </Button>
                 );
               })}
             </div>
@@ -113,28 +114,28 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
               {timeSlots.map((slot) => {
                 const isSelected = selectedSlotId === slot.id;
                 return (
-                  <button
+                  <Button
                     key={slot.id}
                     onClick={() => setSelectedSlotId(slot.id)}
                     className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-[#0A3D2B] bg-emerald-50/70 text-[#0A3D2B]'
+                        ? 'border-brand bg-emerald-50/70 text-brand'
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <Clock className="w-4 h-4" />
                       <div>
-                        <p className="text-xs font-bold">{slot.displayLabel}</p>
-                        <p className="text-[10px] opacity-75 capitalize">{slot.period} slot</p>
+                        <p className="text-xs font-medium">{slot.displayLabel}</p>
+                        <p className="text-[11px] opacity-75 capitalize">{slot.period} slot</p>
                       </div>
                     </div>
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-[#0A3D2B] text-white flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center">
                         <Check className="w-3 h-3 stroke-[3]" />
                       </div>
                     )}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -148,7 +149,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-hidden focus:border-[#0A3D2B]"
+              className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-hidden focus:border-brand"
             >
               <option value="Change of schedule">Change of personal schedule</option>
               <option value="Not available at home">Not available at home</option>
@@ -160,21 +161,21 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
 
         {/* Action Buttons */}
         <div className="pt-3 border-t border-slate-100 flex gap-2">
-          <button
+          <Button
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleConfirm}
             disabled={isSubmitting || !selectedSlotId}
-            className="flex-1 py-2.5 rounded-xl bg-[#0A3D2B] hover:bg-[#06291C] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+            className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-[var(--brand-dark)] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
           >
             {isSubmitting ? 'Saving...' : 'Confirm Reschedule'}
-          </button>
+          </Button>
         </div>
-      </div>
+      </DialogSurface>
     </div>
   );
 };

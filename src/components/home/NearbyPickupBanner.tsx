@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, DialogSurface } from '../ui';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { QrCode, Truck, ChevronRight, X, PackageCheck } from 'lucide-react';
@@ -43,7 +44,7 @@ export const NearbyPickupBanner: React.FC<NearbyPickupBannerProps> = ({ pickups,
       {arrived.map((p) => (
         <div
           key={idOf(p)}
-          className="rounded-3xl bg-gradient-to-br from-[#0A3D2B] via-[#0E4D36] to-[#062418] text-white p-4 shadow-xl space-y-3 relative overflow-hidden"
+          className="rounded-3xl bg-gradient-to-br from-brand via-[var(--brand-hover)] to-[var(--brand-dark)] text-white p-4 shadow-xl space-y-3 relative overflow-hidden"
         >
           <div className="absolute -right-8 -top-8 w-32 h-32 bg-emerald-400/15 rounded-full blur-xl pointer-events-none" />
           <div className="flex items-start gap-3 relative">
@@ -51,35 +52,35 @@ export const NearbyPickupBanner: React.FC<NearbyPickupBannerProps> = ({ pickups,
               <QrCode className="w-6 h-6" />
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-300">Pickup {p.pickupCode}</p>
-              <h3 className="text-base font-black leading-tight mt-0.5">Your pickup executive is nearby</h3>
+              <p className="data-value text-[11px] font-bold uppercase tracking-wider text-emerald-300">Pickup {p.pickupCode}</p>
+              <h3 className="text-base font-bold leading-tight mt-0.5">Your pickup executive is nearby</h3>
               <p className="text-xs text-emerald-100/90 mt-1 leading-relaxed">
                 {executiveOf(p)} is here. Show your pickup QR code to continue.
               </p>
             </div>
           </div>
           <div className="grid grid-cols-[2fr_1fr] gap-2 relative">
-            <button
+            <Button
               type="button"
               onClick={() => setQrPickupId(idOf(p))}
-              className="py-3 rounded-2xl bg-[#F59E0B] text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/30 cursor-pointer active:scale-[0.98] transition"
+              className="py-3 rounded-2xl bg-gold text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg  cursor-pointer active:scale-[0.98] transition"
             >
               <QrCode className="w-4.5 h-4.5" />
               Show QR code
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => onOpenDetails(p)}
               className="py-3 rounded-2xl bg-white/10 border border-emerald-400/40 text-emerald-100 font-bold text-xs cursor-pointer hover:bg-white/20 transition"
             >
               Details
-            </button>
+            </Button>
           </div>
         </div>
       ))}
 
       {onTheWay.map((p) => (
-        <button
+        <Button aria-label="Next"
           key={idOf(p)}
           type="button"
           onClick={() => onOpenDetails(p)}
@@ -89,57 +90,57 @@ export const NearbyPickupBanner: React.FC<NearbyPickupBannerProps> = ({ pickups,
             <Truck className="w-5 h-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 block">Pickup {p.pickupCode}</span>
-            <span className="text-sm font-black text-slate-900 block leading-tight">Picker is on the way</span>
+            <span className="data-value text-[11px] font-bold uppercase tracking-wider text-amber-700 block">Pickup {p.pickupCode}</span>
+            <span className="text-sm font-bold text-slate-900 block leading-tight">Picker is on the way</span>
             <span className="text-[11px] text-slate-600 block mt-0.5">
               {executiveOf(p)} has started. Keep your scrap ready.
             </span>
           </span>
           <ChevronRight className="w-4 h-4 text-amber-700 shrink-0" />
-        </button>
+        </Button>
       ))}
 
       {underway.map((p) => (
-        <button
+        <Button aria-label="Next"
           key={idOf(p)}
           type="button"
           onClick={() => onOpenDetails(p)}
           className="w-full text-left rounded-2xl bg-emerald-50 border border-emerald-200 p-3.5 flex items-center gap-3 cursor-pointer hover:bg-emerald-100/60 transition"
         >
-          <span className="w-10 h-10 rounded-xl bg-[#0A3D2B] text-white flex items-center justify-center shrink-0">
+          <span className="w-10 h-10 rounded-xl bg-brand text-white flex items-center justify-center shrink-0">
             <PackageCheck className="w-5 h-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">Pickup {p.pickupCode}</span>
-            <span className="text-sm font-black text-slate-900 block leading-tight">Collection in progress</span>
+            <span className="data-value text-[11px] font-bold uppercase tracking-wider text-emerald-700 block">Pickup {p.pickupCode}</span>
+            <span className="text-sm font-bold text-slate-900 block leading-tight">Collection in progress</span>
             <span className="text-[11px] text-slate-600 block mt-0.5">Tap to review the summary or see your completion code.</span>
           </span>
           <ChevronRight className="w-4 h-4 text-emerald-700 shrink-0" />
-        </button>
+        </Button>
       ))}
 
       {qrPickup &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
-            className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-xs flex items-end sm:items-center justify-center animate-in fade-in"
+            className="fixed inset-0 z-[60] bg-black/70  flex items-end sm:items-center justify-center animate-in fade-in"
             role="dialog"
             aria-label="Pickup QR code"
           >
-            <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[92vh] overflow-y-auto space-y-3">
+            <DialogSurface onClose={() => setQrPickupId(null)} label="Show this to" className="customer-modal-panel bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[92vh] overflow-y-auto space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pickup {qrPickup.pickupCode}</p>
-                  <h3 className="text-sm font-black text-slate-900">Show this to {executiveOf(qrPickup)}</h3>
+                  <p className="data-value text-[11px] font-bold uppercase tracking-wider text-slate-400">Pickup {qrPickup.pickupCode}</p>
+                  <h3 className="text-lg font-bold text-slate-900">Show this to {executiveOf(qrPickup)}</h3>
                 </div>
-                <button
+                <Button
                   type="button"
                   onClick={() => setQrPickupId(null)}
                   className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
               <PickupQrCard
                 pickupId={idOf(qrPickup)}
@@ -147,9 +148,9 @@ export const NearbyPickupBanner: React.FC<NearbyPickupBannerProps> = ({ pickups,
                 status={qrPickup.status}
                 emphasized
               />
-            </div>
+            </DialogSurface>
           </div>,
-          document.body,
+          document.getElementById('customer-mobile-shell') || document.body,
         )}
     </div>
   );

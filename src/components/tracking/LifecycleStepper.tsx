@@ -60,7 +60,7 @@ export const LifecycleStepper: React.FC<LifecycleStepperProps> = ({ status }) =>
         {/* Connecting Lines Behind Circles */}
         <div className="absolute top-4 left-7 right-7 h-[2px] bg-slate-200 z-0">
           <div
-            className="h-full bg-[#0A3D2B] transition-all duration-500 ease-in-out"
+            className="h-full bg-brand transition-all duration-500 ease-in-out"
             style={{
               width:
                 activeStep === 1
@@ -85,9 +85,9 @@ export const LifecycleStepper: React.FC<LifecycleStepperProps> = ({ status }) =>
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 shadow-xs ${
                   isDone
-                    ? 'bg-[#0A3D2B] text-white border-2 border-[#0A3D2B]'
+                    ? 'bg-brand text-white border-2 border-brand'
                     : isCurrent
-                    ? 'bg-[#0A3D2B] text-white border-2 border-[#0A3D2B] ring-4 ring-emerald-100'
+                    ? 'bg-brand text-white border-2 border-brand ring-4 ring-emerald-100'
                     : 'bg-white text-slate-400 border-2 border-slate-300'
                 }`}
               >

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, DialogSurface } from '../ui';
 import React, { useState } from 'react';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
@@ -46,8 +47,8 @@ export const CancelPickupModal: React.FC<CancelPickupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-      <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 pb-safe sm:pb-5 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/60  flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+      <DialogSurface label="Cancel Pickup Request" onClose={onClose} className="customer-modal-panel bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 pb-safe sm:pb-5 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -55,16 +56,16 @@ export const CancelPickupModal: React.FC<CancelPickupModalProps> = ({
               <AlertTriangle className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-900">Cancel Pickup Request</h3>
-              <p className="text-[10px] text-slate-400">Request ID: {pickupCode}</p>
+              <h3 className="text-lg font-bold text-slate-900">Cancel Pickup Request</h3>
+              <p className="data-value text-[11px] text-slate-400">Request ID: {pickupCode}</p>
             </div>
           </div>
-          <button
+          <Button aria-label="Close"
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200"
           >
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* Reasons list */}
@@ -86,7 +87,7 @@ export const CancelPickupModal: React.FC<CancelPickupModalProps> = ({
                 }`}
               >
                 <span className="text-xs">{r}</span>
-                <input
+                <input aria-label="cancel_reason"
                   type="radio"
                   name="cancel_reason"
                   checked={isSelected}
@@ -98,7 +99,7 @@ export const CancelPickupModal: React.FC<CancelPickupModalProps> = ({
           })}
 
           {selectedReason === 'Other' && (
-            <textarea
+            <textarea aria-label="Please provide additional details..."
               value={otherReasonText}
               onChange={(e) => setOtherReasonText(e.target.value)}
               placeholder="Please provide additional details..."
@@ -110,22 +111,22 @@ export const CancelPickupModal: React.FC<CancelPickupModalProps> = ({
 
         {/* Action Buttons */}
         <div className="pt-3 border-t border-slate-100 flex gap-2">
-          <button
+          <Button
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
           >
             Keep Pickup
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleConfirm}
             disabled={isSubmitting}
             className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Trash2 className="w-3.5 h-3.5" />
             {isSubmitting ? 'Cancelling...' : 'Confirm Cancel'}
-          </button>
+          </Button>
         </div>
-      </div>
+      </DialogSurface>
     </div>
   );
 };

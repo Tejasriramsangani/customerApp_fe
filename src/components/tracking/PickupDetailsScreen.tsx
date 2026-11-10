@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft,
@@ -321,14 +322,11 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
   })();
 
   return (
-    // Mobile: body scrolls (min-h-screen). Desktop: the root layout clips
-    // children inside a fixed-height phone frame (overflow-hidden), so this
-    // root must be the scroll container or the page cannot scroll at all.
-    <div className="w-full h-full min-h-screen overflow-y-auto no-scrollbar bg-[#F8FAFC] pb-safe flex flex-col">
+    <div className="customer-screen w-full no-scrollbar bg-canvas pb-safe flex flex-col">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-4 inset-x-4 z-50 flex justify-center pointer-events-none animate-in fade-in slide-in-from-top-4">
-          <div className="bg-slate-900/90 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg backdrop-blur-xs flex items-center gap-2">
+        <div className="customer-toast fixed top-4 inset-x-4 z-50 flex justify-center pointer-events-none animate-in fade-in slide-in-from-top-4">
+          <div className="bg-slate-900/90 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg  flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <span>{toastMessage}</span>
           </div>
@@ -336,25 +334,25 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
       )}
 
       {/* Top Header matching Image 4 */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center justify-between">
-        <button
+      <header className="shrink-0 relative z-30 bg-white/90  border-b border-slate-200/80 px-4 py-3 flex items-center justify-between">
+        <Button
           onClick={onBack}
           className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
           aria-label="Back"
         >
           <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
-        </button>
+        </Button>
 
         <div className="text-center">
-          <h1 className="text-base font-black text-slate-900 tracking-tight">
+          <h1 className="text-base font-bold text-slate-900 tracking-tight">
             Pickup Details
           </h1>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          <p className="data-value text-[11px] text-slate-400 font-bold uppercase tracking-wider">
             ID: {pickup?.pickupCode || '...'}
           </p>
         </div>
 
-        <button
+        <Button
           onClick={fetchPickupDetails}
           disabled={isLoading}
           className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
@@ -362,52 +360,52 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           aria-label="Refresh"
         >
           <RefreshCw className={`w-4 h-4 stroke-[2.5] ${isLoading ? 'animate-spin text-emerald-600' : ''}`} />
-        </button>
+        </Button>
       </header>
 
       {/* Main Container */}
       {isLoading && !pickup ? (
         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center my-auto">
           <RefreshCw className="w-8 h-8 text-emerald-600 animate-spin mb-3" />
-          <p className="text-xs font-bold text-slate-500">Fetching live pickup details...</p>
+          <p className="text-xs font-medium text-slate-500">Fetching live pickup details...</p>
         </div>
       ) : !pickup ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
-          <p className="text-sm font-bold text-slate-700">Pickup Record Not Found</p>
+          <p className="text-sm font-medium text-slate-700">Pickup Record Not Found</p>
           <p className="text-xs text-slate-400 mt-1 max-w-xs">
             This pickup could not be located on the server. Please verify your order list.
           </p>
-          <button
+          <Button
             onClick={onBack}
-            className="mt-4 px-4 py-2 bg-[#0A3D2B] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-[#06291C]"
+            className="mt-4 px-4 py-2 bg-brand text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-[var(--brand-dark)]"
           >
             Return to My Pickups
-          </button>
+          </Button>
         </div>
       ) : (
         <>
-          <main className="flex-1 px-4 py-3 pb-16 max-w-md mx-auto w-full">
+          <main className="customer-main px-4 py-3 pb-6 max-w-md mx-auto w-full">
             {isCompleted ? (
               /* Done: a success header replaces the Placed / Scheduled / Employee Assigned tracker */
-              <div className="w-full rounded-3xl bg-gradient-to-br from-[#0A3D2B] via-[#0E4D36] to-[#062418] text-white p-5 mb-4 shadow-xl text-center relative overflow-hidden">
+              <div className="w-full rounded-3xl bg-gradient-to-br from-brand via-[var(--brand-hover)] to-[var(--brand-dark)] text-white p-5 mb-4 shadow-xl text-center relative overflow-hidden">
                 <div className="absolute -right-10 -top-10 w-36 h-36 bg-emerald-400/15 rounded-full blur-xl pointer-events-none" />
                 <div className="w-16 h-16 rounded-full bg-emerald-400/20 border-2 border-emerald-300 mx-auto flex items-center justify-center relative">
                   <CheckCircle2 className="w-9 h-9 text-emerald-300" />
                 </div>
-                <h2 className="text-xl font-black mt-3 tracking-tight">Pickup completed</h2>
+                <h2 className="text-2xl font-bold mt-3 tracking-tight">Pickup completed</h2>
                 <p className="text-xs text-emerald-100/90 mt-1">
                   Thank you! Your scrap was collected and you have received your payment.
                 </p>
                 {paidAmountPaise != null && (
                   <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/10 border border-emerald-300/30">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-200">
                       {receivedLabel}
                     </span>
-                    <span className="text-lg font-black">{formatRupees(paidAmountPaise)}</span>
+                    <span className="data-value text-lg font-bold">{formatRupees(paidAmountPaise)}</span>
                   </div>
                 )}
                 {(completedAtLabel || invoice?.invoiceNumber) && (
-                  <p className="text-[10px] text-emerald-200/80 mt-2.5">
+                  <p className="text-[11px] text-emerald-200/80 mt-2.5">
                     {[completedAtLabel, invoice?.invoiceNumber ? `Invoice ${invoice.invoiceNumber}` : '']
                       .filter(Boolean)
                       .join(' · ')}
@@ -455,10 +453,10 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
               <Calendar className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
                 Scheduled Slot
               </p>
-              <h4 className="text-xs font-black text-slate-900 mt-0.5">
+              <h4 className="text-base font-bold text-slate-900 mt-0.5">
                 {formattedDate}
               </h4>
               <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 mt-0.5">
@@ -469,12 +467,12 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           </div>
 
           {!isLocked && (
-            <button
+            <Button
               onClick={() => setIsRescheduleOpen(true)}
-              className="text-xs font-bold text-[#0A3D2B] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer shadow-2xs"
+              className="text-xs font-bold text-brand bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer shadow-2xs"
             >
               Reschedule
-            </button>
+            </Button>
           )}
         </div>
 
@@ -485,10 +483,10 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
               <IndianRupee className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
                 {isCompleted ? 'Payment' : 'Payment Method'}
               </p>
-              <h4 className="text-xs font-black text-slate-900 mt-0.5">
+              <h4 className="text-base font-bold text-slate-900 mt-0.5">
                 {isCompleted
                   ? paidMethodLabel
                   : pickup.settlementPreference === 'UPI'
@@ -497,7 +495,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
                   ? 'Donate to NGO'
                   : 'Cash (Pay on pickup)'}
               </h4>
-              <p className="text-[10px] text-slate-400 mt-0.5">
+              <p className="data-value text-[11px] text-slate-400 mt-0.5">
                 {isCompleted
                   ? `${formatRupees(paidAmountPaise)} received`
                   : 'Amount weighed on digital scale'}
@@ -506,7 +504,7 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
           </div>
 
           {isCompleted ? (
-            <span className="text-[11px] font-black text-white bg-emerald-600 px-3 py-1 rounded-full inline-flex items-center gap-1">
+            <span className="text-[11px] font-bold text-white bg-emerald-600 px-3 py-1 rounded-full inline-flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> Received
             </span>
           ) : (
@@ -532,18 +530,18 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
         {/* Final receipt of a completed pickup: what was weighed and paid */}
         {isCompleted && invoice && (
           <div className="w-full bg-white rounded-2xl p-4 border border-emerald-200 mb-4 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-black text-slate-900">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
               <CheckCircle2 className="w-4 h-4 text-emerald-700" /> Weighing summary
             </div>
             {(invoice.lineItems || []).map((item: any, index: number) => (
               <div key={item.productId || index} className="flex justify-between text-xs">
                 <span>{item.productName || 'Item'} · {(item.netWeightGrams || 0) / 1000} kg</span>
-                <strong>{formatRupees(item.amount)}</strong>
+                <strong className="data-value">{formatRupees(item.amount)}</strong>
               </div>
             ))}
-            <div className="flex justify-between border-t pt-2 text-sm font-black">
+            <div className="flex justify-between border-t pt-2 text-sm font-bold">
               <span>Total received</span>
-              <span className="text-emerald-700">{formatRupees(invoice.totalAmount)}</span>
+              <span className="data-value text-emerald-700">{formatRupees(invoice.totalAmount)}</span>
             </div>
           </div>
         )}
@@ -551,17 +549,17 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
         {['SUMMARY_READY', 'CUSTOMER_CONFIRMED', 'PAYMENT_PENDING', 'SETTLED'].includes(String(pickup.status)) && summary && (
           <div className="mb-4 space-y-3">
           <div className="w-full bg-white rounded-2xl p-4 border border-emerald-200 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-black text-slate-900">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
               <CheckCircle2 className="w-4 h-4 text-emerald-700" /> Weighing summary
             </div>
             {(summary.items || []).map((item: any, index: number) => (
               <div key={item.productId || index} className="flex justify-between text-xs">
                 <span>{item.productName || 'Item'} · {(item.netWeightGrams || 0) / 1000} kg</span>
-                <strong>₹{((item.amountPaise || 0) / 100).toFixed(2)}</strong>
+                <strong className="data-value">₹{((item.amountPaise || 0) / 100).toFixed(2)}</strong>
               </div>
             ))}
-            <div className="flex justify-between border-t pt-2 text-sm font-black">
-              <span>Total</span><span>₹{((summary.totals?.totalAmountPaise || 0) / 100).toFixed(2)}</span>
+            <div className="flex justify-between border-t pt-2 text-sm font-bold">
+              <span>Total</span><span className="data-value">₹{((summary.totals?.totalAmountPaise || 0) / 100).toFixed(2)}</span>
             </div>
           </div>
 
@@ -580,13 +578,13 @@ export const PickupDetailsScreen: React.FC<PickupDetailsScreenProps> = ({
         {/* 8. Cancel Pickup Request Action (Image 4) */}
         {!isLocked && (
           <div className="pt-2">
-            <button
+            <Button aria-label="Delete"
               onClick={() => setIsCancelModalOpen(true)}
               className="w-full py-3 px-4 rounded-2xl border-2 border-rose-200 bg-white hover:bg-rose-50/60 active:scale-[0.99] text-rose-600 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs group"
             >
               <Trash2 className="w-4 h-4 stroke-[2.2] group-hover:rotate-6 transition-transform" />
               <span>Cancel Pickup Request</span>
-            </button>
+            </Button>
           </div>
         )}
         </main>

@@ -11,8 +11,8 @@ export const GreenerTomorrowSection: React.FC = () => {
           <Leaf className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="text-xs font-black text-slate-900 leading-tight">Together For A Greener Tomorrow</h3>
-          <p className="text-[10px] text-emerald-800 font-semibold">100% Ethical Recycling in Vijayawada</p>
+          <h3 className="text-lg font-bold text-slate-900 leading-tight">Together For A Greener Tomorrow</h3>
+          <p className="text-[11px] text-emerald-800 font-semibold">100% Ethical Recycling in Vijayawada</p>
         </div>
       </div>
 
@@ -24,18 +24,18 @@ export const GreenerTomorrowSection: React.FC = () => {
       <div className="grid grid-cols-3 gap-2 pt-1 text-center">
         <div className="p-2 rounded-2xl bg-white border border-emerald-100/80 shadow-2xs">
           <Recycle className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
-          <span className="text-xs font-black text-[#0A3D2B] block">100+ Tons</span>
-          <span className="text-[9px] text-slate-500 font-medium">Recycled</span>
+          <span className="text-xs font-bold text-brand block">100+ Tons</span>
+          <span className="text-[11px] text-slate-500 font-medium">Recycled</span>
         </div>
         <div className="p-2 rounded-2xl bg-white border border-emerald-100/80 shadow-2xs">
-          <Award className="w-4 h-4 text-[#F59E0B] mx-auto mb-0.5" />
-          <span className="text-xs font-black text-[#0A3D2B] block">5,000+</span>
-          <span className="text-[9px] text-slate-500 font-medium">Happy Users</span>
+          <Award className="w-4 h-4 text-gold mx-auto mb-0.5" />
+          <span className="text-xs font-bold text-brand block">5,000+</span>
+          <span className="text-[11px] text-slate-500 font-medium">Happy Users</span>
         </div>
         <div className="p-2 rounded-2xl bg-white border border-emerald-100/80 shadow-2xs">
           <Leaf className="w-4 h-4 text-emerald-600 mx-auto mb-0.5" />
-          <span className="text-xs font-black text-[#0A3D2B] block">100%</span>
-          <span className="text-[9px] text-slate-500 font-medium">Eco Traceable</span>
+          <span className="text-xs font-bold text-brand block">100%</span>
+          <span className="text-[11px] text-slate-500 font-medium">Eco Traceable</span>
         </div>
       </div>
     </div>

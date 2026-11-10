@@ -1,331 +1,196 @@
 "use client";
-
+import { Button } from '../ui';
+import { AuthIllustration } from './AuthIllustration';
+import styles from './Authentication.module.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Edit2, KeyRound, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { ArrowLeft, Edit2, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { apiClient, getApiErrorMessage, normalizeMobile } from '../../lib/api-client';
 import { useAuth } from '../../context/AuthContext';
-
 interface OtpVerificationScreenProps {
-  mobileNumber: string;
-  /** OTP returned by the backend when SMS_PROVIDER=mock; null when a real SMS was sent. */
-  initialDevOtp?: string | null;
-  onBack: () => void;
-  onEditMobile: () => void;
-  onSuccess: (isNewUser: boolean) => void;
+    mobileNumber: string;
+    /** OTP returned by the backend when SMS_PROVIDER=mock; null when a real SMS was sent. */
+    initialDevOtp?: string | null;
+    onBack: () => void;
+    onEditMobile: () => void;
+    onSuccess: (isNewUser: boolean) => void;
 }
-
-export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
-  mobileNumber,
-  initialDevOtp = null,
-  onBack,
-  onEditMobile,
-  onSuccess,
-}) => {
-  const { login } = useAuth();
-  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(30);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [devOtp, setDevOtp] = useState<string | null>(initialDevOtp);
-
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  // 30s Countdown Timer
-  useEffect(() => {
-    if (timer <= 0) return;
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timer]);
-
-  // Auto-focus first input box
-  useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
-
-  const handleChange = (index: number, value: string) => {
-    const cleanVal = value.replace(/\D/g, '');
-    if (!cleanVal) {
-      const updated = [...otp];
-      updated[index] = '';
-      setOtp(updated);
-      return;
-    }
-
-    // Single digit input
-    const char = cleanVal.slice(-1);
-    const updated = [...otp];
-    updated[index] = char;
-    setOtp(updated);
-    if (errorMessage) setErrorMessage(null);
-
-    // Auto-advance to next input
-    if (index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    } else {
-      // If 6 digits filled, trigger verification
-      const fullCode = [...updated].join('');
-      if (fullCode.length === 6) {
-        handleVerify(fullCode);
-      }
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasteData.length === 6) {
-      const splitArr = pasteData.split('');
-      setOtp(splitArr);
-      inputRefs.current[5]?.focus();
-      handleVerify(pasteData);
-    }
-  };
-
-  const handleVerify = async (codeToVerify?: string) => {
-    const fullCode = codeToVerify || otp.join('');
-    if (fullCode.length !== 6) {
-      setErrorMessage('Please enter all 6 digits of the verification code.');
-      return;
-    }
-
-    setIsVerifying(true);
-    setErrorMessage(null);
-
-    try {
-      const res = await apiClient.post('/auth/otp/verify', {
-        mobile: normalizeMobile(mobileNumber),
-        code: fullCode,
-        purpose: 'LOGIN',
-        requestedRole: 'CUSTOMER',
-      });
-
-      if (res.success && res.data) {
-        const { accessToken, refreshToken, user } = res.data;
-        login(accessToken, refreshToken, {
-          id: user.id,
-          mobile: user.mobile || normalizeMobile(mobileNumber),
-          roles: user.roles,
-          status: user.status,
-        });
-
-        const profileRes = await apiClient.getProfile<any>();
-        const fullName = profileRes.success ? profileRes.data?.fullName : undefined;
-        if (fullName) {
-          login(accessToken, refreshToken, {
-            id: user.id,
-            mobile: user.mobile || normalizeMobile(mobileNumber),
-            roles: user.roles,
-            status: user.status,
-            fullName,
-          });
-        }
-        const isNewUser = !fullName;
-        onSuccess(isNewUser);
-      } else {
-        setErrorMessage(getApiErrorMessage(res.error, 'Invalid OTP code. Please check and try again.'));
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Error verifying code.');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    if (timer > 0 || isResending) return;
-
-    setIsResending(true);
-    setErrorMessage(null);
-
-    try {
-      const res = await apiClient.post<{ devOtp?: string }>('/auth/otp/send', {
-        mobile: normalizeMobile(mobileNumber),
-        purpose: 'LOGIN',
-      });
-
-      if (res.success) {
-        setTimer(30);
-        setDevOtp(res.data?.devOtp ?? null);
-        setOtp(['', '', '', '', '', '']);
+export const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({ mobileNumber, initialDevOtp = null, onBack, onEditMobile, onSuccess, }) => {
+    const { login } = useAuth();
+    const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+    const [timer, setTimer] = useState(30);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [isResending, setIsResending] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [devOtp, setDevOtp] = useState<string | null>(initialDevOtp);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    // 30s Countdown Timer
+    useEffect(() => {
+        if (timer <= 0)
+            return;
+        const interval = setInterval(() => {
+            setTimer((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [timer]);
+    // Auto-focus first input box
+    useEffect(() => {
         inputRefs.current[0]?.focus();
-      } else {
-        setErrorMessage(getApiErrorMessage(res.error, 'Failed to resend code.'));
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Network error.');
-    } finally {
-      setIsResending(false);
-    }
-  };
-
-  const fillDevOtp = () => {
-    if (devOtp && /^d{6}$/.test(devOtp)) setOtp(devOtp.split(''));
-  };
-
-  const isFull = otp.every((d) => d !== '');
-
-  return (
-    <div className="w-full h-full min-h-screen bg-gradient-to-b from-[#F0FDF4] via-[#F8FAFC] to-white flex flex-col justify-between p-6 overflow-hidden">
-      {/* Top Bar Navigation */}
-      <div className="flex items-center justify-between pt-2">
-        <button
-          onClick={onBack}
-          className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-          Verification
-        </span>
-        <div className="w-10" />
-      </div>
-
-      {/* Main Form Area */}
-      <div className="flex-1 flex flex-col items-center justify-center py-4 text-center">
-        {/* OTP Graphic Icon */}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="relative w-full max-w-[200px] h-36 flex items-center justify-center mb-4"
-        >
-          <div className="absolute w-36 h-36 rounded-full bg-emerald-200/50 blur-2xl" />
-          <div className="relative z-10 w-24 h-24 rounded-3xl bg-gradient-to-tr from-[#0A3D2B] to-[#12583F] shadow-xl p-3 flex flex-col items-center justify-center border border-emerald-400/30">
-            <KeyRound className="w-10 h-10 text-[#F59E0B]" />
-            <span className="text-[10px] font-black text-white tracking-widest mt-1">123456</span>
-          </div>
-        </motion.div>
-
-        {/* Headings */}
-        <h2 className="text-2xl font-black text-slate-900 leading-tight">
-          Enter the OTP
-        </h2>
-        <div className="flex items-center justify-center gap-1.5 mt-2">
-          <p className="text-xs text-slate-500">
-            We've sent a 6-digit code to <span className="font-bold text-slate-800">+91 {mobileNumber}</span>
-          </p>
-          <button
-            onClick={onEditMobile}
-            className="text-emerald-700 hover:text-emerald-900 p-1"
-            aria-label="Edit mobile number"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* 6 Square Inputs */}
-        <div className="mt-8 flex items-center justify-center gap-1.5 sm:gap-2.5">
-          {otp.map((digit, idx) => (
-            <input
-              key={idx}
-              ref={(el) => {
-                inputRefs.current[idx] = el;
-              }}
-              type="tel"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleChange(idx, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(idx, e)}
-              onPaste={handlePaste}
-              className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-lg font-black rounded-xl sm:rounded-2xl bg-white border-2 shadow-sm transition-all focus:outline-none ${
-                digit
-                  ? 'border-[#0A3D2B] text-[#0A3D2B] bg-emerald-50/30 ring-2 ring-emerald-500/20'
-                  : 'border-slate-200 text-slate-900 focus:border-[#0A3D2B]'
-              }`}
-            />
-          ))}
-        </div>
-
+    }, []);
+    const handleChange = (index: number, value: string) => {
+        const cleanVal = value.replace(/\D/g, '');
+        if (!cleanVal) {
+            const updated = [...otp];
+            updated[index] = '';
+            setOtp(updated);
+            return;
+        }
+        if (cleanVal.length === 6) {
+            setOtp(cleanVal.split(''));
+            if (errorMessage)
+                setErrorMessage(null);
+            inputRefs.current[5]?.focus();
+            handleVerify(cleanVal);
+            return;
+        }
+        // Single digit input
+        const char = cleanVal.slice(-1);
+        const updated = [...otp];
+        updated[index] = char;
+        setOtp(updated);
+        if (errorMessage)
+            setErrorMessage(null);
+        // Auto-advance to next input
+        if (index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+        else {
+            // If 6 digits filled, trigger verification
+            const fullCode = [...updated].join('');
+            if (fullCode.length === 6) {
+                handleVerify(fullCode);
+            }
+        }
+    };
+    const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        if (pasteData.length === 6) {
+            const splitArr = pasteData.split('');
+            setOtp(splitArr);
+            inputRefs.current[5]?.focus();
+            handleVerify(pasteData);
+        }
+    };
+    const handleVerify = async (codeToVerify?: string) => {
+        const fullCode = codeToVerify || otp.join('');
+        if (fullCode.length !== 6) {
+            setErrorMessage('Please enter all 6 digits of the verification code.');
+            return;
+        }
+        setIsVerifying(true);
+        setErrorMessage(null);
+        try {
+            const res = await apiClient.post('/auth/otp/verify', {
+                mobile: normalizeMobile(mobileNumber),
+                code: fullCode,
+                purpose: 'LOGIN',
+                requestedRole: 'CUSTOMER',
+            });
+            if (res.success && res.data) {
+                const { accessToken, refreshToken, user } = res.data;
+                login(accessToken, refreshToken, {
+                    id: user.id,
+                    mobile: user.mobile || normalizeMobile(mobileNumber),
+                    roles: user.roles,
+                    status: user.status,
+                });
+                const profileRes = await apiClient.getProfile<{
+                    fullName?: string;
+                }>();
+                const fullName = profileRes.success ? profileRes.data?.fullName : undefined;
+                if (fullName) {
+                    login(accessToken, refreshToken, {
+                        id: user.id,
+                        mobile: user.mobile || normalizeMobile(mobileNumber),
+                        roles: user.roles,
+                        status: user.status,
+                        fullName,
+                    });
+                }
+                const isNewUser = !fullName;
+                onSuccess(isNewUser);
+            }
+            else {
+                setErrorMessage(getApiErrorMessage(res.error, 'Invalid OTP code. Please check and try again.'));
+            }
+        }
+        catch (err: unknown) {
+            setErrorMessage(getApiErrorMessage(err, 'Error verifying code.'));
+        }
+        finally {
+            setIsVerifying(false);
+        }
+    };
+    const handleResendOtp = async () => {
+        if (timer > 0 || isResending)
+            return;
+        setIsResending(true);
+        setErrorMessage(null);
+        try {
+            const res = await apiClient.post<{
+                devOtp?: string;
+            }>('/auth/otp/send', {
+                mobile: normalizeMobile(mobileNumber),
+                purpose: 'LOGIN',
+            });
+            if (res.success) {
+                setTimer(30);
+                setDevOtp(res.data?.devOtp ?? null);
+                setOtp(['', '', '', '', '', '']);
+                inputRefs.current[0]?.focus();
+            }
+            else {
+                setErrorMessage(getApiErrorMessage(res.error, 'Failed to resend code.'));
+            }
+        }
+        catch (err: unknown) {
+            setErrorMessage(getApiErrorMessage(err, 'Network error.'));
+        }
+        finally {
+            setIsResending(false);
+        }
+    };
+    const fillDevOtp = () => {
+        if (devOtp && /^\d{6}$/.test(devOtp))
+            setOtp(devOtp.split(''));
+    };
+    const isFull = otp.every((d) => d !== '');
+    return (<section className={styles.screen} aria-labelledby="otp-heading"><header className={styles.header}><Button onClick={onBack} className={styles.back} aria-label="Back"><ArrowLeft size={22}/></Button></header><AuthIllustration kind="otp"/><div className={styles.content}><h1 id="otp-heading">Enter the OTP</h1><div className={styles.mobileCaption}><p>We&apos;ve sent a 6-digit code to<br /><strong>+91 {normalizeMobile(mobileNumber).replace(/^\+?91/, '')}</strong></p><Button onClick={onEditMobile} className={styles.editMobile} aria-label="Edit mobile number"><Edit2 size={16}/></Button></div>
+    <div className={styles.otpFields} role="group" aria-label="Six-digit verification code">{otp.map((digit, idx) => <input key={idx} ref={el => { inputRefs.current[idx] = el; }} type="text" inputMode="numeric" autoComplete={idx === 0 ? 'one-time-code' : 'off'} maxLength={idx === 0 ? 6 : 1} value={digit} aria-label={'OTP digit ' + (idx + 1)} aria-invalid={!!errorMessage} disabled={isVerifying} data-filled={!!digit} onChange={e => handleChange(idx, e.target.value)} onKeyDown={e => handleKeyDown(idx, e)} onPaste={handlePaste}/>)}</div>
         {/* SMS_PROVIDER=mock: no SMS is sent, so show the OTP that was just generated */}
-        {devOtp && (
-          <div className="mt-5 mx-auto max-w-sm p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-1.5">
+        {devOtp && (<div className="mt-5 mx-auto max-w-sm p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 min-w-0">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0"/>
                 <span className="truncate">
                   Test OTP: <strong className="font-mono text-sm tracking-widest text-slate-900">{devOtp}</strong>
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={fillDevOtp}
-                className="shrink-0 px-2.5 py-1 rounded-lg bg-[#0A3D2B] text-white font-black text-[10px] uppercase tracking-wider hover:bg-[#0E4D36]"
-              >
+              <Button type="button" onClick={fillDevOtp} className="shrink-0 px-2.5 py-1 rounded-lg bg-brand text-white font-bold text-[11px] uppercase tracking-wider hover:bg-[var(--brand-hover)]">
                 Fill
-              </button>
+              </Button>
             </div>
-            <p className="text-[10px] text-amber-800/80 leading-relaxed">
+            <p className="text-[11px] text-amber-800/80 leading-relaxed">
               SMS provider is in mock mode, so no SMS was sent. This code is shown here for testing only.
             </p>
-          </div>
-        )}
+          </div>)}
 
-        {/* Error Message */}
-        {errorMessage && (
-          <motion.p
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-[11px] font-semibold text-rose-600 mt-4 px-2"
-          >
-            ⚠️ {errorMessage}
-          </motion.p>
-        )}
 
-        {/* Resend OTP Timer & Button */}
-        <div className="mt-6 text-xs text-slate-500">
-          {timer > 0 ? (
-            <p>
-              Resend OTP in{' '}
-              <span className="font-bold text-emerald-800">
-                00:{timer < 10 ? `0${timer}` : timer}
-              </span>
-            </p>
-          ) : (
-            <button
-              onClick={handleResendOtp}
-              disabled={isResending}
-              className="font-bold text-[#0A3D2B] hover:underline flex items-center gap-1.5 mx-auto"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
-              <span>Resend OTP</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom CTA Button */}
-      <div className="pb-safe pt-2">
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={() => handleVerify()}
-          disabled={!isFull || isVerifying}
-          className={`w-full py-4 rounded-2xl font-bold text-sm shadow-xl flex items-center justify-center gap-2 transition-all ${
-            isFull && !isVerifying
-              ? 'bg-[#0A3D2B] text-white shadow-emerald-950/20 hover:bg-[#0E4D36]'
-              : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed'
-          }`}
-        >
-          {isVerifying ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span>Verifying Code...</span>
-            </>
-          ) : (
-            <span>Verify & Continue</span>
-          )}
-        </motion.button>
-      </div>
-    </div>
-  );
+    {errorMessage && <p role="alert" className={styles.error}>{errorMessage}</p>}<div className={styles.resend}>{timer > 0 ? <p>Resend OTP in <strong>00:{String(timer).padStart(2, '0')}</strong></p> : <Button onClick={handleResendOtp} disabled={isResending} className={styles.textButton}><RefreshCw size={15} className={isResending ? styles.spinner : undefined}/> Resend OTP</Button>}</div>
+    <Button onClick={() => handleVerify()} disabled={!isFull || isVerifying} aria-busy={isVerifying} className={styles.primary}>{isVerifying ? <><Loader2 size={18} className={styles.spinner}/> Verifying Code...</> : 'Verify & Continue'}</Button></div></section>);
 };

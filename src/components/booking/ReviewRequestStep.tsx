@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -150,10 +151,10 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
   };
 
   return (
-    <div className="flex flex-col justify-between min-h-[calc(100vh-140px)]">
-      <div className="space-y-4 pb-6">
+    <div className="customer-booking-step flex flex-col justify-between ">
+      <div className="customer-booking-step-body space-y-4 pb-6">
         <div>
-          <h2 className="text-xl font-black text-slate-900 leading-tight">Review your request</h2>
+          <h2 className="text-2xl font-bold text-slate-900 leading-tight">Review your request</h2>
           <p className="text-xs text-slate-500 mt-1">
             Please check your details before requesting the doorstep pickup.
           </p>
@@ -161,25 +162,25 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
 
         <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div className="flex items-start gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0A3D2B] flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-brand flex items-center justify-center shrink-0 mt-0.5">
               <MapPin className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                 Pickup Address
               </span>
               {address ? (
                 <>
-                  <h4 className="text-xs font-black text-slate-900 mt-0.5 flex items-center gap-1.5">
+                  <h4 className="text-base font-bold text-slate-900 mt-0.5 flex items-center gap-1.5">
                     {addressTitle(address)}
                     {address.isDefault && (
-                      <span className="text-[9px] font-black uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                      <span className="text-[11px] font-bold uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
                         Primary
                       </span>
                     )}
                   </h4>
                   <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{addressLine(address)}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-400 mt-0.5">
                     {address.city} - {address.pincode}
                     {address.landmark ? ` · Near ${address.landmark}` : ''}
                   </p>
@@ -191,30 +192,30 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
               )}
             </div>
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => onEditStep(3)}
             className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 p-1 shrink-0"
           >
             <Edit2 className="w-3.5 h-3.5" />
             <span>Edit</span>
-          </button>
+          </Button>
         </div>
 
         <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-[#F59E0B] flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-gold flex items-center justify-center shrink-0 mt-0.5">
               <Package className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                 Scrap Categories
               </span>
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {selectedCategories.map((c) => (
                   <span
                     key={c.id}
-                    className="text-[11px] font-extrabold text-[#0A3D2B] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200"
+                    className="text-[11px] font-extrabold text-brand bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200"
                   >
                     {c.emoji} {c.name}
                   </span>
@@ -222,14 +223,14 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
               </div>
             </div>
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => onEditStep(1)}
             className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 p-1"
           >
             <Edit2 className="w-3.5 h-3.5" />
             <span>Edit</span>
-          </button>
+          </Button>
         </div>
 
         <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex items-start justify-between">
@@ -238,10 +239,10 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
               <Scale className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                 Estimated Weight
               </span>
-              <h4 className="text-xs font-black text-slate-900 mt-0.5">
+              <h4 className="text-base font-bold text-slate-900 mt-0.5">
                 {selectedWeight?.label || '—'}
               </h4>
               <p className="text-[11px] text-slate-500 mt-0.5">
@@ -249,14 +250,14 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
               </p>
             </div>
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => onEditStep(2)}
             className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 p-1"
           >
             <Edit2 className="w-3.5 h-3.5" />
             <span>Edit</span>
-          </button>
+          </Button>
         </div>
 
         <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex items-start justify-between">
@@ -265,23 +266,23 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                 Pickup Schedule
               </span>
-              <h4 className="text-xs font-black text-slate-900 mt-0.5">{formattedDate}</h4>
+              <h4 className="text-base font-bold text-slate-900 mt-0.5">{formattedDate}</h4>
               <p className="text-[11px] text-slate-500 mt-0.5">
                 {selectedSlot?.displayLabel || 'Collection window to be confirmed'}
               </p>
             </div>
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => onEditStep(3)}
             className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 p-1"
           >
             <Edit2 className="w-3.5 h-3.5" />
             <span>Edit</span>
-          </button>
+          </Button>
         </div>
 
         <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-xs">
@@ -293,40 +294,40 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <button
+            <Button
               type="button"
               onClick={() => setPaymentPreference('CASH')}
               className={`py-2.5 px-2 rounded-2xl border-2 text-[11px] font-bold transition-all text-center ${
                 state.paymentPreference === 'CASH'
-                  ? 'border-[#0A3D2B] bg-emerald-50 text-[#0A3D2B] ring-1 ring-[#0A3D2B]'
+                  ? 'border-brand bg-emerald-50 text-brand ring-1 ring-brand'
                   : 'border-slate-200 bg-white text-slate-600'
               }`}
             >
               Cash
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => setPaymentPreference('UPI')}
               className={`py-2.5 px-2 rounded-2xl border-2 text-[11px] font-bold transition-all text-center ${
                 state.paymentPreference === 'UPI'
-                  ? 'border-[#0A3D2B] bg-emerald-50 text-[#0A3D2B] ring-1 ring-[#0A3D2B]'
+                  ? 'border-brand bg-emerald-50 text-brand ring-1 ring-brand'
                   : 'border-slate-200 bg-white text-slate-600'
               }`}
             >
               UPI
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => setPaymentPreference('DONATE')}
               className={`py-2.5 px-2 rounded-2xl border-2 text-[11px] font-bold transition-all text-center flex items-center justify-center gap-1 ${
                 state.paymentPreference === 'DONATE'
-                  ? 'border-[#0A3D2B] bg-emerald-50 text-[#0A3D2B] ring-1 ring-[#0A3D2B]'
+                  ? 'border-brand bg-emerald-50 text-brand ring-1 ring-brand'
                   : 'border-slate-200 bg-white text-slate-600'
               }`}
             >
               <Heart className="w-3 h-3" />
               Donate
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -337,14 +338,14 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
               Remarks <span className="font-medium text-slate-400">(optional)</span>
             </span>
           </div>
-          <textarea
+          <textarea aria-label="Gate code, landmark, preferred contact, etc."
             value={state.remarks || ''}
             onChange={(e) => setRemarks(e.target.value.slice(0, 300))}
             placeholder="Gate code, landmark, preferred contact, etc."
             rows={3}
-            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3D2B]/30 focus:border-[#0A3D2B]"
+            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
           />
-          <p className="text-[10px] text-slate-400 mt-1 text-right">
+          <p className="text-[11px] text-slate-400 mt-1 text-right">
             {(state.remarks || '').length}/300
           </p>
         </div>
@@ -357,12 +358,12 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
         )}
       </div>
 
-      <div className="pt-4 border-t border-slate-200/80">
+      <div className="customer-booking-actions pt-4 border-t border-slate-200/80">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleConfirmBooking}
           disabled={isLoading}
-          className="w-full py-4 rounded-2xl bg-[#0A3D2B] text-white font-bold text-sm shadow-xl shadow-emerald-950/20 hover:bg-[#0E4D36] flex items-center justify-center gap-2 transition-all disabled:opacity-70"
+          className="w-full py-4 rounded-2xl bg-brand text-white font-bold text-sm shadow-xl  hover:bg-[var(--brand-hover)] flex items-center justify-center gap-2 transition-all disabled:opacity-70"
         >
           {isLoading ? (
             <>
@@ -376,9 +377,9 @@ export const ReviewRequestStep: React.FC<ReviewRequestStepProps> = ({
             </>
           )}
         </motion.button>
-        <button type="button" className="sr-only" onClick={onBack}>
+        <Button type="button" className="sr-only" onClick={onBack}>
           Back
-        </button>
+        </Button>
       </div>
     </div>
   );

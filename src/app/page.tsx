@@ -1,6 +1,8 @@
 "use client";
 
+import { Button } from '../components/ui';
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { LocationProvider, useLocation, LocationData } from '../context/LocationContext';
 import { TopAppBar } from '../components/layout/TopAppBar';
@@ -23,7 +25,6 @@ import { BookingWizardModal } from '../components/booking/BookingWizardModal';
 import { PickupDetailsScreen } from '../components/tracking/PickupDetailsScreen';
 import { MyPickupsScreen } from '../components/pickups/MyPickupsScreen';
 import { ProfileScreen } from '../components/profile/ProfileScreen';
-import { BrandLogo } from '../components/common/BrandLogo';
 import { ServerDownScreen } from '../components/common/ServerDownScreen';
 import { apiClient } from '../lib/api-client';
 import { SHOW_BULK_UI } from '../lib/booking-helpers';
@@ -206,8 +207,18 @@ function CustomerApp() {
   // Splash Loading
   if (currentStep === 'loading') {
     return (
-      <div className="w-full h-screen bg-[#0A3D2B] flex flex-col items-center justify-center text-white">
-        <BrandLogo variant="light" size="xl" className="animate-pulse" />
+      <div
+        className="customer-screen relative w-full overflow-hidden bg-brand"
+        style={{ height: 'calc(100% + env(safe-area-inset-top, 0px))', marginTop: 'calc(-1 * env(safe-area-inset-top, 0px))' }}
+      >
+        <Image
+          src="/onboarding/launch-splash.png"
+          alt="ASLI KAATA — Real weight. Real value. Your scrap builds a cleaner tomorrow."
+          fill
+          preload
+          sizes="(max-width: 430px) 100vw, 430px"
+          style={{ objectFit: 'cover', objectPosition: 'center' }}
+        />
       </div>
     );
   }
@@ -280,7 +291,7 @@ function CustomerApp() {
 
   // Main App Shell (Phases 0, 4, 5, 6, 7)
   return (
-    <div className="w-full h-full min-h-screen bg-[#F8FAFC] flex flex-col justify-between relative overflow-hidden">
+    <div className="customer-screen w-full bg-canvas flex flex-col justify-between relative overflow-hidden">
       {/* Top App Bar with Location Chip (Hidden during booking wizard) */}
       {activeTab !== 'request' && (
         <TopAppBar
@@ -290,7 +301,7 @@ function CustomerApp() {
       )}
 
       {/* Main Content Area based on Tab */}
-      <main className="flex-1 overflow-y-auto px-4 py-4 pb-24 no-scrollbar">
+      <main id="main-content" data-booking={activeTab === 'request'} tabIndex={-1} className="customer-main min-w-0 px-4 py-4 pb-6 no-scrollbar">
         {/* TAB 1: HOME (Screens 6 & 7) */}
         {activeTab === 'home' && (
           <div className="space-y-4">
@@ -302,11 +313,11 @@ function CustomerApp() {
                     {user.fullName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-800">Hello, {user.fullName} 👋</p>
-                    <p className="text-[10px] text-slate-400">+91 {user.mobile}</p>
+                    <p className="text-xs font-medium text-slate-800">Hello, {user.fullName} 👋</p>
+                    <p className="text-[11px] text-slate-400">+91 {user.mobile}</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                   Verified Customer
                 </span>
               </div>
@@ -342,21 +353,21 @@ function CustomerApp() {
             {process.env.NODE_ENV === 'development' && (
             <div className="pt-2 border-t border-slate-200/60 text-center">
               <div className="flex items-center justify-center gap-3 text-[11px] text-slate-400">
-                <button
+                <Button
                   onClick={() => setCurrentStep('login')}
                   className="hover:text-slate-700 underline"
                 >
                   Test Login (Phase 3)
-                </button>
+                </Button>
                 <span>•</span>
-                <button
+                <Button
                   onClick={() => setCurrentStep('location')}
                   className="hover:text-slate-700 underline"
                 >
                   Location Gate (Phase 2)
-                </button>
+                </Button>
                 <span>•</span>
-                <button
+                <Button
                   onClick={() => {
                     localStorage.removeItem('aslikaata_onboarded');
                     setCurrentStep('onboarding');
@@ -364,7 +375,7 @@ function CustomerApp() {
                   className="hover:text-slate-700 underline"
                 >
                   Walkthrough (Phase 1)
-                </button>
+                </Button>
               </div>
             </div>
             )}

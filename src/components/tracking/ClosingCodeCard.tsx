@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '../ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import { KeyRound, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { apiClient, getApiErrorMessage } from '../../lib/api-client';
@@ -70,10 +71,10 @@ export const ClosingCodeCard: React.FC<ClosingCodeCardProps> = ({ pickupId, pick
     : null;
 
   return (
-    <div className="w-full rounded-3xl border-2 border-[#0A3D2B] bg-emerald-50/80 p-4 space-y-3 shadow-md ring-1 ring-[#0A3D2B]/20">
+    <div className="w-full rounded-3xl border-2 border-brand bg-emerald-50/80 p-4 space-y-3 shadow-md ring-1 ring-brand/20">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="flex items-center gap-2 text-sm font-black text-slate-900">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
             <KeyRound className="w-4 h-4 text-emerald-800" />
             Confirm with your code
           </div>
@@ -82,7 +83,7 @@ export const ClosingCodeCard: React.FC<ClosingCodeCardProps> = ({ pickupId, pick
             handover and that you received the amount.
           </p>
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => load(true)}
           disabled={loading}
@@ -91,7 +92,7 @@ export const ClosingCodeCard: React.FC<ClosingCodeCardProps> = ({ pickupId, pick
           aria-label="Get a new completion code"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        </Button>
       </div>
 
       {loading && !code ? (
@@ -106,7 +107,7 @@ export const ClosingCodeCard: React.FC<ClosingCodeCardProps> = ({ pickupId, pick
           {code.split('').map((digit, i) => (
             <span
               key={i}
-              className="w-11 h-14 rounded-2xl bg-white border-2 border-emerald-300 shadow-sm flex items-center justify-center font-mono font-black text-2xl text-[#0A3D2B]"
+              className="w-11 h-14 rounded-2xl bg-white border-2 border-emerald-300 shadow-sm flex items-center justify-center font-mono font-bold text-2xl text-brand"
             >
               {digit}
             </span>
@@ -123,7 +124,7 @@ export const ClosingCodeCard: React.FC<ClosingCodeCardProps> = ({ pickupId, pick
       </div>
 
       {expiresLabel && code && (
-        <p className="text-[10px] text-center text-slate-400 font-semibold">
+        <p className="text-[11px] text-center text-slate-400 font-semibold">
           Valid until {expiresLabel} · tap refresh for a new code
         </p>
       )}
